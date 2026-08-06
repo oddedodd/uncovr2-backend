@@ -56,7 +56,7 @@ the source for product intent, roles, privacy requirements and MVP scope.
 ### B0 gate
 
 - [x] A fresh checkout can be configured from documented instructions.
-- [ ] Tests pass locally and in CI.
+- [x] Tests pass locally and in CI.
 - [x] No secret or local database file is tracked by Git.
 
 ## B1 — API conventions and application skeleton
