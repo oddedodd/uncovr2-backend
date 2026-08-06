@@ -22,7 +22,7 @@ phase gate must be satisfied before work starts on the next product surface.
 
 ## Requirements
 
-- PHP 8.3 or newer with PDO SQLite and PDO PostgreSQL.
+- PHP 8.4.1 or newer with PDO SQLite and PDO PostgreSQL.
 - Composer 2.
 - Node.js 24 and npm for frontend assets.
 - Access to the active Supabase project when running the application locally.
