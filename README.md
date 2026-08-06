@@ -20,14 +20,60 @@ The authoritative, checkable implementation sequence is in
 Work should proceed from the first unchecked task in the active milestone. A
 phase gate must be satisfied before work starts on the next product surface.
 
-## Local setup
+## Requirements
+
+- PHP 8.3 or newer with PDO SQLite and PDO PostgreSQL.
+- Composer 2.
+- Node.js 24 and npm for frontend assets.
+- Access to the active Supabase project when running the application locally.
+
+## Fresh checkout
 
 ```bash
+git clone git@github.com:oddedodd/uncovr2-backend.git
+cd uncovr2-backend
 composer install
+npm ci
 cp .env.example .env
 php artisan key:generate
+```
+
+Add the Supabase Session Pooler connection to `.env`:
+
+```dotenv
+DB_CONNECTION=pgsql
+DB_URL="postgresql://postgres.PROJECT_REF:YOUR_PASSWORD@POOLER_HOST:5432/postgres"
+DB_SCHEMA=laravel
+DB_SSLMODE=require
+```
+
+The password and complete connection string belong only in `.env` and must
+never be committed. Then prepare and build the application:
+
+```bash
 php artisan migrate
+npm run build
+composer test
+```
+
+Start local development with:
+
+```bash
+composer dev
+```
+
+## Tests and quality checks
+
+Tests always use an in-memory SQLite database configured in `phpunit.xml`.
+They do not connect to Supabase, even when the local `.env` contains production
+database credentials.
+
+```bash
+composer validate --strict
+composer audit --locked --no-interaction
+./vendor/bin/pint --test
 php artisan test
 ```
 
-Database credentials belong in `.env` and must never be committed.
+GitHub Actions runs the same validation, audit, formatting and test checks for
+every pull request and every push to `main`.

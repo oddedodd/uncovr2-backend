@@ -51,13 +51,13 @@ the source for product intent, roles, privacy requirements and MVP scope.
 - [x] `B0.8` Confirm `anon`, `authenticated` and `service_role` cannot access the private schema.
 - [x] `B0.9` Replace the framework README with Uncovr project documentation.
 - [x] `B0.10` Create the intentional initial Git commit.
-- [ ] `B0.11` Add CI for tests, formatting and static checks.
+- [x] `B0.11` Add CI for tests, formatting and static checks.
 
 ### B0 gate
 
-- [ ] A fresh checkout can be configured from documented instructions.
+- [x] A fresh checkout can be configured from documented instructions.
 - [ ] Tests pass locally and in CI.
-- [ ] No secret or local database file is tracked by Git.
+- [x] No secret or local database file is tracked by Git.
 
 ## B1 — API conventions and application skeleton
 
