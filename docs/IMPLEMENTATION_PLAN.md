@@ -84,10 +84,10 @@ the source for product intent, roles, privacy requirements and MVP scope.
 - [x] `B2.2` Finalize the access-token and rotating refresh-token design.
 - [x] `B2.3` Extend users and profiles with required, minimal personal data.
 - [x] `B2.4` Implement `POST /api/v1/auth/register`.
-- [ ] `B2.5` Configure Resend and implement the email-verification and resend flow.
+- [x] `B2.5` Configure Resend and implement the email-verification and resend flow.
   - [x] `B2.5a` Install the supported Resend transport, validate required environment
     variables and keep API keys and webhook secrets outside Git.
-  - [ ] `B2.5b` Configure a dedicated sending subdomain and document SPF, DKIM,
+  - [x] `B2.5b` Configure a dedicated sending subdomain and document SPF, DKIM,
     DMARC, sender and reply-to requirements for each environment.
   - [x] `B2.5c` Create a shared, accessible Uncovr transactional-email layout with
     HTML and plain-text versions, safe URLs and local previews.

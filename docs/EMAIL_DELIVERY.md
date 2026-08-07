@@ -20,8 +20,14 @@ RESEND_API_KEY=re_...
 ```
 
 The application fails fast whenever the Resend mailer is enabled without an API
-key, sender, or reply-to address. `RESEND_WEBHOOK_SECRET` is reserved for the signed delivery-webhook
-work in B8 and must also remain outside Git.
+key, sender, or reply-to address. `RESEND_WEBHOOK_SECRET` is reserved for the
+signed delivery-webhook work in B8 and must also remain outside Git.
+
+Local development deliberately keeps `MAIL_MAILER=log`; a real Resend key is
+not required for automated or day-to-day local work. Staging and production
+must use separate `sending_access` keys restricted to `mail.uncovr.no`. The
+controlled real-delivery check and its environment-specific key belong to
+`B2.14`, not the automated B2.5 test suite.
 
 Run a worker for transactional mail:
 
@@ -35,26 +41,30 @@ Mail is queued only after its database transaction commits. Retry delays are
 idempotency key, so a retry of the same queued notification cannot create a
 duplicate provider send.
 
-## Resend domain checklist
+## Verified Resend domain
 
-Use the dedicated sending subdomain `mail.uncovr.no`. If Uncovr's final domain
-changes, update the sender addresses and this document together.
+The dedicated sending subdomain `mail.uncovr.no` was verified by Resend on
+2026-08-08. A public DNS lookup on the same date confirmed:
 
-1. Add `mail.uncovr.no` in the Resend Domains dashboard.
-2. Copy Resend's current SPF and DKIM records exactly into the authoritative DNS
-   provider. Do not copy example values from documentation.
-3. Wait until Resend reports the domain as verified.
-4. Publish a DMARC TXT record for the sending domain. Begin with monitoring
-   (`p=none`) and an actively monitored aggregate-report mailbox; tighten the
-   policy only after legitimate traffic has been observed.
-5. Confirm that `accounts@mail.uncovr.no` is accepted as the From address and
-   that replies to `support@uncovr.no` reach a monitored inbox.
-6. Use separate, scoped Resend API keys for staging and production and record
-   their owners and rotation dates in the deployment secret manager.
+- DKIM TXT at `resend._domainkey.mail.uncovr.no`;
+- SPF TXT at `send.mail.uncovr.no` authorizing Amazon SES;
+- MX return path at `send.mail.uncovr.no`, priority 10, in `eu-west-1`;
+- organizational DMARC at `_dmarc.uncovr.no` with `p=quarantine` and aggregate
+  reports handled by Domeneshop. In the absence of a more specific subdomain
+  record, this policy also applies to `mail.uncovr.no`.
 
-The dashboard verification and a real staging delivery are intentionally
-manual. Record the date, recipient, Resend message ID, SPF result, DKIM result,
-DMARC result, and inbox placement when completing B2.5b and B2.14.
+Do not replace the separate root SPF record used by Domeneshop mail. If Uncovr's
+final domain or email provider changes, review all four records and update the
+sender addresses and this document together.
+
+The configured sender is `accounts@mail.uncovr.no`. The reply-to address
+`support@uncovr.no` must resolve to a real, monitored inbox before the staging
+smoke test. Staging and production use separate scoped Resend API keys whose
+owners and rotation dates are recorded in the deployment secret manager.
+
+The real staging delivery remains intentionally manual. Record its date,
+recipient, Resend message ID, SPF result, DKIM result, DMARC result, and inbox
+placement when completing B2.14.
 
 ## Safe local preview and tests
 
