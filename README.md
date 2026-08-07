@@ -17,6 +17,11 @@ will communicate with this API instead of accessing the database directly.
 The authoritative, checkable implementation sequence is in
 [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
 
+Backend conventions are documented in:
+
+- [docs/API_CONVENTIONS.md](docs/API_CONVENTIONS.md)
+- [docs/IDENTIFIERS.md](docs/IDENTIFIERS.md)
+
 Work should proceed from the first unchecked task in the active milestone. A
 phase gate must be satisfied before work starts on the next product surface.
 
