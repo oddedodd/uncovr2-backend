@@ -66,10 +66,15 @@ class AuthenticationDesignTest extends TestCase
     public function test_expired_sanctum_tokens_are_scheduled_for_pruning(): void
     {
         Artisan::call('schedule:list');
+        $schedule = Artisan::output();
 
         $this->assertStringContainsString(
             'sanctum:prune-expired --hours=24',
-            Artisan::output(),
+            $schedule,
+        );
+        $this->assertStringContainsString(
+            'auth:prune-device-sessions',
+            $schedule,
         );
     }
 

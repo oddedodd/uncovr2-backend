@@ -101,15 +101,19 @@ only one is in flight for a device session.
 
 Laravel performs rotation in one short database transaction:
 
-1. Hash the presented token and lock its `refresh_tokens` row for update.
-2. Lock and validate the owning device session, idle expiry and absolute expiry.
-3. Reject a missing, expired or revoked token with the same generic 401 error.
-4. If `used_at` is already set, treat it as replay: revoke the whole device
+1. Hash the presented token and resolve its owning device session without
+   exposing or logging the token.
+2. Lock the device session first and then its `refresh_tokens` row for update;
+   every refresh and revocation flow uses this lock order.
+3. Validate the device session, refresh-token expiry, idle expiry and absolute
+   expiry.
+4. Reject a missing, expired or revoked token with the same generic 401 error.
+5. If `used_at` is already set, treat it as replay: revoke the whole device
    session, every refresh generation and its Sanctum access token, and record a
-   security audit event.
-5. Mark the current refresh token used, create the next generation, replace the
+   token-free security log event. Persistent audit storage is added in `B2.12`.
+6. Mark the current refresh token used, create the next generation, replace the
    Sanctum access token and extend idle expiry up to the absolute session limit.
-6. Commit before returning both new plain-text tokens exactly once.
+7. Commit before returning both new plain-text tokens exactly once.
 
 The first concurrent refresh wins. A second request using the old generation is
 treated as replay and revokes the session. If a client loses the successful
@@ -117,9 +121,10 @@ rotation response, it must log in again; the server never stores a recoverable
 plain-text successor token.
 
 Used refresh-token hashes and their replacement links remain until the absolute
-session expiry plus 30 days so replay can be detected. The refresh implementation
-in `B2.7` adds that cleanup. Sanctum access tokens that have been expired for at
-least 24 hours are pruned by a daily scheduled command.
+session expiry plus 30 days so replay can be detected. A daily scheduled command
+then deletes the expired device session and its token generations together.
+Sanctum access tokens that have been expired for at least 24 hours are pruned by
+a separate daily scheduled command.
 
 Expired or revoked device-session metadata is purged 30 days after its absolute
 expiry. Account deletion follows the stricter deletion and backup-retention flow

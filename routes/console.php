@@ -11,3 +11,7 @@ Artisan::command('inspire', function () {
 Schedule::command('sanctum:prune-expired --hours=24')
     ->daily()
     ->withoutOverlapping();
+
+Schedule::command('auth:prune-device-sessions')
+    ->daily()
+    ->withoutOverlapping();

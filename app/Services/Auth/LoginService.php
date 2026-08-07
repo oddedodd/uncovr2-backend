@@ -15,6 +15,10 @@ use Throwable;
 
 final class LoginService
 {
+    public function __construct(
+        private readonly RefreshTokenGenerator $refreshTokenGenerator,
+    ) {}
+
     /** @return array<string, mixed> */
     public function portal(User $user, Request $request, array $device): array
     {
@@ -66,7 +70,7 @@ final class LoginService
         $accessExpiresAt = $now->copy()->addMinutes(
             config('authentication.access_token_ttl_minutes'),
         );
-        $plainRefreshToken = $this->newRefreshToken();
+        $plainRefreshToken = $this->refreshTokenGenerator->generate();
 
         [$deviceSession, $plainAccessToken] = DB::transaction(
             function () use (
@@ -162,14 +166,6 @@ final class LoginService
             'idle_expires_at' => $this->timestamp($session->idle_expires_at),
             'absolute_expires_at' => $this->timestamp($session->absolute_expires_at),
         ];
-    }
-
-    private function newRefreshToken(): string
-    {
-        $entropy = random_bytes(config('authentication.refresh_token_bytes'));
-
-        return config('authentication.refresh_token_prefix')
-            .rtrim(strtr(base64_encode($entropy), '+/', '-_'), '=');
     }
 
     private function timestamp(CarbonInterface $timestamp): string

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Auth\LoginController;
+use App\Http\Controllers\Api\V1\Auth\RefreshTokenController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\ResendVerificationController;
 use App\Http\Controllers\Api\V1\Auth\VerifyEmailController;
@@ -27,6 +28,10 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
         Route::post('/resend-verification', ResendVerificationController::class)
             ->name('resend-verification');
     });
+
+    Route::post('/refresh', RefreshTokenController::class)
+        ->middleware('throttle:public')
+        ->name('refresh');
 
     Route::get('/verify-email/{user}/{version}/{hash}', VerifyEmailController::class)
         ->whereUlid('user')
