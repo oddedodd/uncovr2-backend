@@ -85,3 +85,16 @@ request bodies are not included in completion logs.
 Both endpoints disable response caching. Readiness failures return HTTP 503
 with `service_unavailable`; database errors and connection details are logged
 internally but never returned to the caller.
+
+## Browser origins and transport security
+
+Browser access is credentialed and restricted to the comma-separated origins
+in `CORS_ALLOWED_ORIGINS`. Values must include the scheme and port when
+applicable. Wildcard origins are not supported. `X-Request-ID` is exposed so
+the portal can include it in support and error reports.
+
+Production must use HTTPS, set `APP_URL` to the canonical backend URL and set
+`TRUSTED_HOSTS` to a comma-separated list of exact hostnames. Session cookies
+default to `Secure`, `HttpOnly` and `SameSite=Lax` in production. API responses
+also deny framing, MIME sniffing and browser permissions; HTTPS production
+responses include HSTS.
