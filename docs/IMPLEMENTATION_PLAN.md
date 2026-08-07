@@ -64,7 +64,7 @@ the source for product intent, roles, privacy requirements and MVP scope.
 - [x] `B1.1` Add `routes/api.php` and version all endpoints below `/api/v1`.
 - [x] `B1.2` Define a consistent JSON success, validation and error format.
 - [x] `B1.3` Add request IDs and structured application logging.
-- [ ] `B1.4` Add health and readiness endpoints without sensitive details.
+- [x] `B1.4` Add health and readiness endpoints without sensitive details.
 - [ ] `B1.5` Configure trusted origins, CORS and secure production defaults.
 - [ ] `B1.6` Define rate-limit groups for public, authenticated and authentication routes.
 - [ ] `B1.7` Decide and document internal and public identifier strategy.

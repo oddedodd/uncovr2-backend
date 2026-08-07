@@ -74,3 +74,14 @@ Application logs are JSON and attach `request_id` to every entry written while
 an API request is handled. One completion event is logged with the HTTP method,
 path, named route, status code and duration in milliseconds. Query strings and
 request bodies are not included in completion logs.
+
+## Operational health
+
+- `GET /api/v1/health/live` confirms that the Laravel process can answer HTTP
+  requests. It does not query external dependencies.
+- `GET /api/v1/health/ready` confirms that the application can execute a
+  minimal query through its configured database connection.
+
+Both endpoints disable response caching. Readiness failures return HTTP 503
+with `service_unavailable`; database errors and connection details are logged
+internally but never returned to the caller.
