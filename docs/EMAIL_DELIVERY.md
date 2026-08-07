@@ -76,8 +76,9 @@ On 2026-08-08 the guarded command sent one message from
 - API result: accepted by Resend
 - delivery-event lookup: unavailable because the production key is correctly
   restricted to sending only
-- inbox placement and received-header SPF, DKIM and DMARC results: awaiting
-  confirmation in the controlled recipient mailbox
+- inbox placement: confirmed by the owner of `post@odde.org` on 2026-08-08
+- SPF, DKIM and DMARC: sending-domain and DNS configuration verified; the
+  restricted sending key cannot retrieve received-message authentication headers
 
 The command requires `--to` and an exactly matching `--confirm`, refuses to run
 in the automated-test environment, and never sends through the queue. Run it
