@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use App\Http\Middleware\AssignRequestId;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
@@ -19,38 +20,38 @@ final class ApiExceptionRenderer
         }
 
         if ($exception instanceof ValidationException) {
-            return ApiResponse::error(
+            return $this->withRequestId(ApiResponse::error(
                 code: 'validation_failed',
                 message: 'The submitted data is invalid.',
                 status: 422,
                 details: ['fields' => $exception->errors()],
-            );
+            ), $request);
         }
 
         if ($exception instanceof AuthenticationException) {
-            return ApiResponse::error(
+            return $this->withRequestId(ApiResponse::error(
                 code: 'unauthenticated',
                 message: 'Authentication is required.',
                 status: 401,
-            );
+            ), $request);
         }
 
         if ($exception instanceof HttpExceptionInterface) {
             $status = $exception->getStatusCode();
 
-            return ApiResponse::error(
+            return $this->withRequestId(ApiResponse::error(
                 code: $this->codeForStatus($status),
                 message: $this->messageForStatus($status),
                 status: $status,
                 headers: $exception->getHeaders(),
-            );
+            ), $request);
         }
 
-        return ApiResponse::error(
+        return $this->withRequestId(ApiResponse::error(
             code: 'internal_error',
             message: 'An unexpected error occurred.',
             status: 500,
-        );
+        ), $request);
     }
 
     private function codeForStatus(int $status): string
@@ -85,5 +86,16 @@ final class ApiExceptionRenderer
                 ? 'An unexpected error occurred.'
                 : 'The request failed.',
         };
+    }
+
+    private function withRequestId(JsonResponse $response, Request $request): JsonResponse
+    {
+        $requestId = $request->attributes->get(AssignRequestId::ATTRIBUTE);
+
+        if (is_string($requestId)) {
+            $response->headers->set('X-Request-ID', $requestId);
+        }
+
+        return $response;
     }
 }

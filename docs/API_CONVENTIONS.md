@@ -63,3 +63,14 @@ Validation failures use HTTP 422 and include errors grouped by input field:
   }
 }
 ```
+
+## Request correlation and logs
+
+Every API response includes an `X-Request-ID` header containing a UUID. Clients
+and trusted proxies may provide their own UUID in the same request header;
+invalid values are replaced. Include this ID when reporting an API problem.
+
+Application logs are JSON and attach `request_id` to every entry written while
+an API request is handled. One completion event is logged with the HTTP method,
+path, named route, status code and duration in milliseconds. Query strings and
+request bodies are not included in completion logs.
