@@ -98,3 +98,18 @@ Production must use HTTPS, set `APP_URL` to the canonical backend URL and set
 default to `Secure`, `HttpOnly` and `SameSite=Lax` in production. API responses
 also deny framing, MIME sniffing and browser permissions; HTTPS production
 responses include HSTS.
+
+## Rate-limit groups
+
+- `public` limits unauthenticated product endpoints per IP address.
+- `authenticated` limits protected endpoints per user identifier, with the IP
+  address as a fallback before authentication has completed.
+- `authentication` applies both an IP limit and a stricter normalized-identity
+  plus IP limit to login, registration and account-recovery endpoints. The
+  normalized identity is SHA-256 hashed before it becomes part of a cache key.
+
+Limits are configured with the `RATE_LIMIT_*` environment variables. A blocked
+request returns HTTP 429 using the standard API error envelope and includes the
+normal rate-limit and retry headers. Operational health checks are intentionally
+outside these application groups and should be protected at the infrastructure
+layer instead.

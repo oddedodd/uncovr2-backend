@@ -66,7 +66,7 @@ the source for product intent, roles, privacy requirements and MVP scope.
 - [x] `B1.3` Add request IDs and structured application logging.
 - [x] `B1.4` Add health and readiness endpoints without sensitive details.
 - [x] `B1.5` Configure trusted origins, CORS and secure production defaults.
-- [ ] `B1.6` Define rate-limit groups for public, authenticated and authentication routes.
+- [x] `B1.6` Define rate-limit groups for public, authenticated and authentication routes.
 - [ ] `B1.7` Decide and document internal and public identifier strategy.
 - [ ] `B1.8` Establish feature-test helpers for JSON APIs and database isolation.
 - [ ] `B1.9` Document API naming, pagination, filtering, sorting and timestamps.
