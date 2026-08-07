@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
-use Resend\Resend;
 use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
@@ -41,7 +40,7 @@ class AppServiceProvider extends ServiceProvider
         Mail::extend('resend', function (array $config): ResendTransport {
             $key = $config['key'] ?? config('services.resend.key');
 
-            return new ResendTransport(Resend::client($key));
+            return new ResendTransport(\Resend::client($key));
         });
     }
 
@@ -95,7 +94,20 @@ class AppServiceProvider extends ServiceProvider
                 )->by('authentication:ip:'.$ip),
                 Limit::perMinute(
                     config('rate_limiting.authentication_per_identity_per_minute'),
-                )->by('authentication:identity:'.$ip.':'.$identityHash),
+                )->by('authentication:identity:'.$identityHash),
+            ];
+        });
+
+        RateLimiter::for('refresh', function (Request $request) {
+            $ip = $request->ip() ?? 'unknown';
+            $token = $request->input('refresh_token');
+            $tokenHash = hash('sha256', is_string($token) ? $token : 'missing');
+
+            return [
+                Limit::perMinute(config('rate_limiting.refresh_per_ip_per_minute'))
+                    ->by('refresh:ip:'.$ip),
+                Limit::perMinute(config('rate_limiting.refresh_per_token_per_minute'))
+                    ->by('refresh:token:'.$tokenHash),
             ];
         });
     }

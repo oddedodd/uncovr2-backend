@@ -96,8 +96,8 @@ return [
         'users' => [
             'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
-            'expire' => 60,
-            'throttle' => 60,
+            'expire' => max(1, (int) env('AUTH_PASSWORD_RESET_TTL_MINUTES', 60)),
+            'throttle' => max(1, (int) env('AUTH_PASSWORD_RESET_THROTTLE_SECONDS', 60)),
         ],
     ],
 

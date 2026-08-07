@@ -89,6 +89,24 @@ class EmailVerificationTest extends TestCase
         Notification::assertNothingSent();
     }
 
+    public function test_verification_resends_are_rate_limited_per_normalized_identity(): void
+    {
+        Notification::fake();
+        config([
+            'rate_limiting.authentication_per_ip_per_minute' => 100,
+            'rate_limiting.authentication_per_identity_per_minute' => 1,
+        ]);
+        $user = $this->unverifiedUser();
+
+        $this->postApi('/auth/resend-verification', ['email' => strtoupper($user->email)])
+            ->assertAccepted();
+        $this->assertApiError(
+            $this->postApi('/auth/resend-verification', ['email' => ' '.$user->email.' ']),
+            429,
+            'too_many_requests',
+        );
+    }
+
     public function test_verification_mail_is_queued_after_commit_with_retries_and_both_formats(): void
     {
         $user = $this->unverifiedUser();

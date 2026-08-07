@@ -7,6 +7,7 @@ use App\Http\Requests\Api\V1\Auth\LoginRequest;
 use App\Http\Responses\ApiResponse;
 use App\Models\User;
 use App\Services\Auth\LoginService;
+use App\Services\Auth\SecurityAuditLogger;
 use Illuminate\Contracts\Auth\UserProvider;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -14,7 +15,10 @@ use Illuminate\Support\Facades\Hash;
 
 final class LoginController extends Controller
 {
-    public function __construct(private readonly LoginService $loginService) {}
+    public function __construct(
+        private readonly LoginService $loginService,
+        private readonly SecurityAuditLogger $auditLogger,
+    ) {}
 
     public function __invoke(LoginRequest $request): JsonResponse
     {
@@ -27,13 +31,13 @@ final class LoginController extends Controller
         if ($user === null) {
             Hash::make($password);
 
-            return $this->invalidCredentials();
+            return $this->invalidCredentials($request);
         }
 
         $provider = Auth::guard('web')->getProvider();
 
         if (! $provider->validateCredentials($user, ['password' => $password])) {
-            return $this->invalidCredentials();
+            return $this->invalidCredentials($request, $user);
         }
 
         $this->rehashPasswordIfRequired($provider, $user, $password);
@@ -60,11 +64,21 @@ final class LoginController extends Controller
             $data = $this->loginService->mobile($user, $request, $request->array('device'));
         }
 
+        $this->auditLogger->record(
+            'auth.login_succeeded',
+            $user,
+            $request,
+            $data['session']['id'],
+            ['client_type' => $request->string('client_type')->toString()],
+        );
+
         return ApiResponse::success($data)->header('Cache-Control', 'no-store');
     }
 
-    private function invalidCredentials(): JsonResponse
+    private function invalidCredentials(LoginRequest $request, ?User $user = null): JsonResponse
     {
+        $this->auditLogger->record('auth.login_failed', $user, $request);
+
         return ApiResponse::error(
             code: 'invalid_credentials',
             message: 'The provided credentials are incorrect.',

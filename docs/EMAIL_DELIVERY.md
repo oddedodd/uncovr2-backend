@@ -66,6 +66,29 @@ The real staging delivery remains intentionally manual. Record its date,
 recipient, Resend message ID, SPF result, DKIM result, DMARC result, and inbox
 placement when completing B2.14.
 
+### B2.14 smoke-test record
+
+On 2026-08-08 the guarded command sent one message from
+`accounts@mail.uncovr.no` to `post@odde.org`:
+
+- Resend message ID: `0dd0fa7f-a622-41c8-83fa-a81acfa721dd`
+- smoke-test run ID: `01kzf987x882ajgea8bywj7ac1`
+- API result: accepted by Resend
+- delivery-event lookup: unavailable because the production key is correctly
+  restricted to sending only
+- inbox placement and received-header SPF, DKIM and DMARC results: awaiting
+  confirmation in the controlled recipient mailbox
+
+The command requires `--to` and an exactly matching `--confirm`, refuses to run
+in the automated-test environment, and never sends through the queue. Run it
+only for an explicitly approved controlled address:
+
+```bash
+php artisan email:resend-smoke-test \
+  --to=controlled@example.com \
+  --confirm=controlled@example.com
+```
+
 ## Safe local preview and tests
 
 With `APP_ENV=local`, start Laravel and open:

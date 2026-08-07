@@ -84,6 +84,7 @@ final class ResendTransport extends LaravelResendTransport
             );
         }
 
+        $message->setMessageId($result->id);
         $email->getHeaders()->addHeader('X-Resend-Email-ID', $result->id);
     }
 

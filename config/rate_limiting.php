@@ -14,4 +14,14 @@ return [
         1,
         (int) env('RATE_LIMIT_AUTHENTICATION_PER_IDENTITY_PER_MINUTE', 5),
     ),
+
+    'refresh_per_ip_per_minute' => max(
+        1,
+        (int) env('RATE_LIMIT_REFRESH_PER_IP_PER_MINUTE', 30),
+    ),
+
+    'refresh_per_token_per_minute' => max(
+        1,
+        (int) env('RATE_LIMIT_REFRESH_PER_TOKEN_PER_MINUTE', 10),
+    ),
 ];

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\RegisterRequest;
 use App\Http\Responses\ApiResponse;
 use App\Models\User;
+use App\Services\Auth\SecurityAuditLogger;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\DB;
 
 final class RegisterController extends Controller
 {
+    public function __construct(private readonly SecurityAuditLogger $auditLogger) {}
+
     public function __invoke(RegisterRequest $request): JsonResponse
     {
         $email = $request->string('email')->toString();
@@ -43,6 +46,7 @@ final class RegisterController extends Controller
 
         if ($user !== null) {
             event(new Registered($user));
+            $this->auditLogger->record('auth.registration_created', $user, $request);
         }
 
         return self::acceptedResponse();

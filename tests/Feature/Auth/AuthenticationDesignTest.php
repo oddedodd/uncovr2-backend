@@ -61,6 +61,15 @@ class AuthenticationDesignTest extends TestCase
         ]));
 
         $this->assertTrue(Schema::hasColumn('personal_access_tokens', 'device_session_id'));
+        $this->assertTrue(Schema::hasColumns('security_audit_events', [
+            'public_id',
+            'user_id',
+            'event_type',
+            'device_session_public_id',
+            'ip_address',
+            'metadata',
+            'occurred_at',
+        ]));
     }
 
     public function test_expired_sanctum_tokens_are_scheduled_for_pruning(): void
@@ -76,6 +85,7 @@ class AuthenticationDesignTest extends TestCase
             'auth:prune-device-sessions',
             $schedule,
         );
+        $this->assertStringContainsString('auth:clear-resets', $schedule);
     }
 
     public function test_a_device_session_can_have_only_one_sanctum_access_token(): void

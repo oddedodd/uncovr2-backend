@@ -97,27 +97,32 @@ the source for product intent, roles, privacy requirements and MVP scope.
     resends and return enumeration-safe API responses.
 - [x] `B2.6` Implement `POST /api/v1/auth/login` with device information.
 - [x] `B2.7` Implement refresh-token rotation and reuse detection.
-- [ ] `B2.8` Implement current-device logout and logout from all devices.
-- [ ] `B2.9` Implement forgotten-password and password-reset flows with queued,
+- [x] `B2.8` Implement current-device logout and logout from all devices.
+- [x] `B2.9` Implement forgotten-password and password-reset flows with queued,
   expiring and single-use Resend notifications.
-- [ ] `B2.10` Implement `GET/PATCH /api/v1/me`.
-- [ ] `B2.11` Implement session listing and per-session revocation.
-- [ ] `B2.12` Add authentication throttling, audit events and safe error messages.
-- [ ] `B2.13` Test registration, verification, login, refresh, revocation and reset
+- [x] `B2.10` Implement `GET/PATCH /api/v1/me`.
+- [x] `B2.11` Implement session listing and per-session revocation.
+- [x] `B2.12` Add authentication throttling, audit events and safe error messages.
+- [x] `B2.13` Test registration, verification, login, refresh, revocation and reset
   end to end, including mail recipients, queued notifications, rendered content,
   link expiry, replay rejection and resend throttling.
 - [ ] `B2.14` Add an explicit staging smoke test for real Resend delivery to a
   controlled address; automated tests and CI must always fake mail and perform
   no external sends.
+  - [x] The guarded smoke-test command sent one HTML and plain-text message to
+    `post@odde.org` and recorded Resend ID
+    `0dd0fa7f-a622-41c8-83fa-a81acfa721dd` on 2026-08-08.
+  - [ ] Confirm inbox placement and SPF, DKIM and DMARC results in the received
+    message headers; the scoped sending key cannot read delivery events.
 
 ### B2 gate
 
-- [ ] A listener can register, verify, log in, refresh and log out.
-- [ ] A revoked or reused token cannot access protected endpoints.
-- [ ] Passwords and tokens are never stored in plaintext.
+- [x] A listener can register, verify, log in, refresh and log out.
+- [x] A revoked or reused token cannot access protected endpoints.
+- [x] Passwords and tokens are never stored in plaintext.
 - [ ] Verification and password-reset emails render correctly, arrive through
   Resend in staging and cannot be replayed after use or expiry.
-- [ ] Automated tests never contact Resend or send real email.
+- [x] Automated tests never contact Resend or send real email.
 
 ## B3 — Organizations, artists, roles and authorization
 

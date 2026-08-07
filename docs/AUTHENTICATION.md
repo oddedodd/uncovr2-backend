@@ -146,6 +146,50 @@ defined later in the privacy milestone.
 Revoked credentials always return a generic authentication error. Tokens,
 passwords and session IDs are excluded from application logs and audit payloads.
 
+## Account and session endpoints
+
+Authenticated portal sessions and mobile bearer tokens use the same endpoints:
+
+- `POST /api/v1/auth/logout` revokes the current device session.
+- `POST /api/v1/auth/logout-all` revokes every portal and mobile session owned
+  by the account.
+- `GET /api/v1/me` returns the account's public ID, verified email and minimal
+  profile; `PATCH /api/v1/me` currently changes only `display_name`.
+- `GET /api/v1/me/sessions` lists active sessions and identifies the current
+  one; `DELETE /api/v1/me/sessions/{public_id}` revokes an owned session.
+
+Every protected request validates the device session's revocation, idle and
+absolute expiry state. Portal activity extends only the idle window and never
+the absolute lifetime. Session ownership is resolved server-side; a foreign
+public session ID returns the same not-found response as an unknown ID.
+
+## Password reset
+
+`POST /api/v1/auth/forgot-password` always returns the same accepted response,
+whether or not the normalized email belongs to an account. Laravel stores only
+the reset-token hash. The queued notification encrypts the one-time plain token
+with `APP_KEY` before its job is persisted, and provides HTML and plain-text
+content through Resend.
+
+`POST /api/v1/auth/reset-password` accepts email, token, a password of at least
+15 characters and confirmation. A successful reset hashes the new password,
+consumes the token and revokes every portal session, mobile access token and
+refresh-token generation. Expired, unknown and replayed reset tokens receive
+the same generic error.
+
+## Security audit and throttling
+
+Authentication, refresh, logout, session revocation, password reset and profile
+changes create append-only `security_audit_events` with public event IDs,
+timestamps and bounded request context. Audit metadata rejects password, token
+and session-secret field names. The table is in the private `laravel` schema and
+has no grants to Supabase public API roles.
+
+Authentication limits combine IP and normalized-identity hashes. Refresh limits
+combine IP and a SHA-256 hash of the presented refresh token, so raw credentials
+never become rate-limit keys. Error responses do not distinguish unknown users
+from known users or expired credentials from revoked credentials.
+
 ## Authorization boundary
 
 Protected endpoints use `auth:sanctum`. Token ability `mobile:access` identifies

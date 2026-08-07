@@ -14,6 +14,7 @@ final class RefreshTokenRotationService
 {
     public function __construct(
         private readonly RefreshTokenGenerator $tokenGenerator,
+        private readonly SecurityAuditLogger $auditLogger,
     ) {}
 
     /** @return array<string, mixed>|null */
@@ -63,6 +64,12 @@ final class RefreshTokenRotationService
 
             if ($refreshToken->used_at !== null) {
                 $this->revokeSession($session, $now, 'refresh_token_reuse');
+                $this->auditLogger->record(
+                    'auth.refresh_token_reused',
+                    $session->user,
+                    $request,
+                    $session->public_id,
+                );
 
                 return [
                     'status' => 'reused',
@@ -120,6 +127,13 @@ final class RefreshTokenRotationService
                 'last_used_at' => $now,
                 'idle_expires_at' => $refreshExpiresAt,
             ])->save();
+
+            $this->auditLogger->record(
+                'auth.token_refreshed',
+                $session->user,
+                $request,
+                $session->public_id,
+            );
 
             return [
                 'status' => 'rotated',

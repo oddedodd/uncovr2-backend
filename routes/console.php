@@ -15,3 +15,7 @@ Schedule::command('sanctum:prune-expired --hours=24')
 Schedule::command('auth:prune-device-sessions')
     ->daily()
     ->withoutOverlapping();
+
+Schedule::command('auth:clear-resets')
+    ->hourly()
+    ->withoutOverlapping();
