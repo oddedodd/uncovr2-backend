@@ -62,7 +62,7 @@ the source for product intent, roles, privacy requirements and MVP scope.
 ## B1 — API conventions and application skeleton
 
 - [x] `B1.1` Add `routes/api.php` and version all endpoints below `/api/v1`.
-- [ ] `B1.2` Define a consistent JSON success, validation and error format.
+- [x] `B1.2` Define a consistent JSON success, validation and error format.
 - [ ] `B1.3` Add request IDs and structured application logging.
 - [ ] `B1.4` Add health and readiness endpoints without sensitive details.
 - [ ] `B1.5` Configure trusted origins, CORS and secure production defaults.
