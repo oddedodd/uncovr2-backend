@@ -20,6 +20,7 @@ The authoritative, checkable implementation sequence is in
 Backend conventions are documented in:
 
 - [docs/API_CONVENTIONS.md](docs/API_CONVENTIONS.md)
+- [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md)
 - [docs/IDENTIFIERS.md](docs/IDENTIFIERS.md)
 
 Work should proceed from the first unchecked task in the active milestone. A
