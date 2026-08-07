@@ -95,7 +95,7 @@ the source for product intent, roles, privacy requirements and MVP scope.
     retries, failure visibility and deterministic Resend idempotency keys.
   - [x] `B2.5e` Make verification links signed, expiring and single-use; throttle
     resends and return enumeration-safe API responses.
-- [ ] `B2.6` Implement `POST /api/v1/auth/login` with device information.
+- [x] `B2.6` Implement `POST /api/v1/auth/login` with device information.
 - [ ] `B2.7` Implement refresh-token rotation and reuse detection.
 - [ ] `B2.8` Implement current-device logout and logout from all devices.
 - [ ] `B2.9` Implement forgotten-password and password-reset flows with queued,

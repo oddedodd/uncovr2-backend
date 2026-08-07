@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\ResendVerificationController;
 use App\Http\Controllers\Api\V1\Auth\VerifyEmailController;
@@ -21,6 +22,7 @@ Route::prefix('health')->name('health.')->group(function (): void {
 
 Route::prefix('auth')->name('auth.')->group(function (): void {
     Route::middleware('throttle:authentication')->group(function (): void {
+        Route::post('/login', LoginController::class)->name('login');
         Route::post('/register', RegisterController::class)->name('register');
         Route::post('/resend-verification', ResendVerificationController::class)
             ->name('resend-verification');

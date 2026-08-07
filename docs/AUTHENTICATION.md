@@ -6,6 +6,30 @@ private PostgreSQL database used by Laravel.
 
 ## Client flows
 
+### Login endpoint
+
+Both clients use `POST /api/v1/auth/login` with normalized email, password,
+`client_type` (`portal` or `mobile`) and bounded device metadata:
+
+```json
+{
+  "email": "artist@example.com",
+  "password": "a secure passphrase",
+  "client_type": "mobile",
+  "device": {
+    "name": "Ada's iPhone",
+    "platform": "ios",
+    "app_version": "1.2.3"
+  }
+}
+```
+
+Only verified accounts may log in. Unknown accounts and incorrect passwords
+receive the same `invalid_credentials` response and create no session or token.
+The response always includes the user's public ID and the new device session's
+public ID; internal database IDs are never exposed. Authentication responses
+disable caching.
+
 ### Next.js portal
 
 The portal uses Laravel's stateful session cookie with CSRF protection. It never
@@ -17,6 +41,11 @@ The portal and API must be deployed below the same registrable domain, for
 example `app.uncovr.no` and `api.uncovr.no`. Login regenerates the Laravel
 session ID. Portal sessions have a 120-minute idle timeout and a 12-hour
 absolute lifetime; there is no remember-me flow in the MVP.
+
+Before portal login, the browser requests `/sanctum/csrf-cookie` and then sends
+the login request with credentials from an allowed stateful origin. Successful
+login regenerates the Laravel session ID and returns `authentication.type` as
+`session`; no access or refresh token is included in JSON.
 
 ### Expo application
 
@@ -30,6 +59,12 @@ Mobile lifetimes are:
 - Access token: 15 minutes.
 - Refresh-token inactivity window: 30 days, extended on successful rotation.
 - Absolute device-session lifetime: 90 days, never extended by rotation.
+
+Successful mobile login returns the plain-text access and refresh credentials
+once. Laravel stores only their SHA-256 hashes. The access token has only the
+`mobile:access` ability and is linked to the new device session; the refresh
+token starts at generation zero. The client must move the refresh token into
+the operating system's secure credential store before discarding the response.
 
 The refresh token contains at least 256 bits of cryptographically secure random
 entropy and uses the `uncovr_refresh_` prefix. Only its SHA-256 hash is stored.
