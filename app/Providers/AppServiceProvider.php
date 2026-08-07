@@ -2,11 +2,15 @@
 
 namespace App\Providers;
 
+use App\Mail\Transport\ResendTransport;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Resend\Resend;
+use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,10 +27,40 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->configureResendTransport();
         $this->configureRateLimiting();
+        $this->validateEmailConfiguration();
 
         if ($this->app->isProduction()) {
             URL::forceScheme('https');
+        }
+    }
+
+    private function configureResendTransport(): void
+    {
+        Mail::extend('resend', function (array $config): ResendTransport {
+            $key = $config['key'] ?? config('services.resend.key');
+
+            return new ResendTransport(Resend::client($key));
+        });
+    }
+
+    private function validateEmailConfiguration(): void
+    {
+        if (config('mail.default') !== 'resend') {
+            return;
+        }
+
+        $required = [
+            'RESEND_API_KEY' => config('services.resend.key'),
+            'MAIL_FROM_ADDRESS' => config('mail.from.address'),
+            'MAIL_REPLY_TO_ADDRESS' => config('mail.reply_to.address'),
+        ];
+
+        foreach ($required as $name => $value) {
+            if (! is_string($value) || trim($value) === '' || str_contains($value, 'example.com')) {
+                throw new RuntimeException("{$name} must be configured when the Resend mailer is enabled.");
+            }
         }
     }
 

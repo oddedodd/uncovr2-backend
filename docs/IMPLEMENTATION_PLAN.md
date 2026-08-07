@@ -82,18 +82,18 @@ the source for product intent, roles, privacy requirements and MVP scope.
 
 - [x] `B2.1` Install and configure Laravel Sanctum for first-party authentication.
 - [x] `B2.2` Finalize the access-token and rotating refresh-token design.
-- [ ] `B2.3` Extend users and profiles with required, minimal personal data.
-- [ ] `B2.4` Implement `POST /api/v1/auth/register`.
+- [x] `B2.3` Extend users and profiles with required, minimal personal data.
+- [x] `B2.4` Implement `POST /api/v1/auth/register`.
 - [ ] `B2.5` Configure Resend and implement the email-verification and resend flow.
-  - [ ] `B2.5a` Install the supported Resend transport, validate required environment
+  - [x] `B2.5a` Install the supported Resend transport, validate required environment
     variables and keep API keys and webhook secrets outside Git.
   - [ ] `B2.5b` Configure a dedicated sending subdomain and document SPF, DKIM,
     DMARC, sender and reply-to requirements for each environment.
-  - [ ] `B2.5c` Create a shared, accessible Uncovr transactional-email layout with
+  - [x] `B2.5c` Create a shared, accessible Uncovr transactional-email layout with
     HTML and plain-text versions, safe URLs and local previews.
-  - [ ] `B2.5d` Queue transactional mail after database commit with controlled
+  - [x] `B2.5d` Queue transactional mail after database commit with controlled
     retries, failure visibility and deterministic Resend idempotency keys.
-  - [ ] `B2.5e` Make verification links signed, expiring and single-use; throttle
+  - [x] `B2.5e` Make verification links signed, expiring and single-use; throttle
     resends and return enumeration-safe API responses.
 - [ ] `B2.6` Implement `POST /api/v1/auth/login` with device information.
 - [ ] `B2.7` Implement refresh-token rotation and reuse detection.

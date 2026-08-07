@@ -114,4 +114,8 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    'verification' => [
+        'expire' => max(1, (int) env('AUTH_EMAIL_VERIFICATION_TTL_MINUTES', 60)),
+    ],
+
 ];
