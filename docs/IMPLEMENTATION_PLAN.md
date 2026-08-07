@@ -81,7 +81,7 @@ the source for product intent, roles, privacy requirements and MVP scope.
 ## B2 — Accounts, authentication and device sessions
 
 - [x] `B2.1` Install and configure Laravel Sanctum for first-party authentication.
-- [ ] `B2.2` Finalize the access-token and rotating refresh-token design.
+- [x] `B2.2` Finalize the access-token and rotating refresh-token design.
 - [ ] `B2.3` Extend users and profiles with required, minimal personal data.
 - [ ] `B2.4` Implement `POST /api/v1/auth/register`.
 - [ ] `B2.5` Configure Resend and implement the email-verification and resend flow.
