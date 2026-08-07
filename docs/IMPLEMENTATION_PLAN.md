@@ -21,6 +21,8 @@ the source for product intent, roles, privacy requirements and MVP scope.
 - Laravel owns authentication, authorization, validation and domain logic.
 - Supabase Auth is not used for Uncovr accounts.
 - Supabase hosts PostgreSQL and, later, object storage.
+- Resend is the transactional email provider, used through Laravel Mail and
+  Notifications so domain code is not coupled directly to the provider SDK.
 - Laravel tables live in the private `laravel` schema.
 - Clients never connect directly to Laravel's database tables.
 - The Next.js portal is the working interface for superadmins, labels and artists.
@@ -82,27 +84,47 @@ the source for product intent, roles, privacy requirements and MVP scope.
 - [ ] `B2.2` Finalize the access-token and rotating refresh-token design.
 - [ ] `B2.3` Extend users and profiles with required, minimal personal data.
 - [ ] `B2.4` Implement `POST /api/v1/auth/register`.
-- [ ] `B2.5` Implement email verification and resend flow.
+- [ ] `B2.5` Configure Resend and implement the email-verification and resend flow.
+  - [ ] `B2.5a` Install the supported Resend transport, validate required environment
+    variables and keep API keys and webhook secrets outside Git.
+  - [ ] `B2.5b` Configure a dedicated sending subdomain and document SPF, DKIM,
+    DMARC, sender and reply-to requirements for each environment.
+  - [ ] `B2.5c` Create a shared, accessible Uncovr transactional-email layout with
+    HTML and plain-text versions, safe URLs and local previews.
+  - [ ] `B2.5d` Queue transactional mail after database commit with controlled
+    retries, failure visibility and deterministic Resend idempotency keys.
+  - [ ] `B2.5e` Make verification links signed, expiring and single-use; throttle
+    resends and return enumeration-safe API responses.
 - [ ] `B2.6` Implement `POST /api/v1/auth/login` with device information.
 - [ ] `B2.7` Implement refresh-token rotation and reuse detection.
 - [ ] `B2.8` Implement current-device logout and logout from all devices.
-- [ ] `B2.9` Implement forgotten-password and password-reset flows.
+- [ ] `B2.9` Implement forgotten-password and password-reset flows with queued,
+  expiring and single-use Resend notifications.
 - [ ] `B2.10` Implement `GET/PATCH /api/v1/me`.
 - [ ] `B2.11` Implement session listing and per-session revocation.
 - [ ] `B2.12` Add authentication throttling, audit events and safe error messages.
-- [ ] `B2.13` Test registration, verification, login, refresh, revocation and reset end to end.
+- [ ] `B2.13` Test registration, verification, login, refresh, revocation and reset
+  end to end, including mail recipients, queued notifications, rendered content,
+  link expiry, replay rejection and resend throttling.
+- [ ] `B2.14` Add an explicit staging smoke test for real Resend delivery to a
+  controlled address; automated tests and CI must always fake mail and perform
+  no external sends.
 
 ### B2 gate
 
 - [ ] A listener can register, verify, log in, refresh and log out.
 - [ ] A revoked or reused token cannot access protected endpoints.
 - [ ] Passwords and tokens are never stored in plaintext.
+- [ ] Verification and password-reset emails render correctly, arrive through
+  Resend in staging and cannot be replayed after use or expiry.
+- [ ] Automated tests never contact Resend or send real email.
 
 ## B3 — Organizations, artists, roles and authorization
 
 - [ ] `B3.1` Create organizations and organization profiles.
 - [ ] `B3.2` Create organization memberships with `label_admin` and `label_user` roles.
-- [ ] `B3.3` Create organization invitations with expiry and single-use acceptance.
+- [ ] `B3.3` Create organization invitations with expiry, single-use acceptance
+  and a queued Resend invitation notification.
 - [ ] `B3.4` Create artists and artist profiles.
 - [ ] `B3.5` Create artist memberships with `artist_admin` and `artist_user` roles.
 - [ ] `B3.6` Create organization-to-artist relationships without hard-coding permanent ownership.
@@ -112,6 +134,8 @@ the source for product intent, roles, privacy requirements and MVP scope.
 - [ ] `B3.10` Ensure access can be granted at multiple scopes to the same user.
 - [ ] `B3.11` Log invitations, role changes, suspensions and membership removal.
 - [ ] `B3.12` Add a complete authorization matrix as automated feature tests.
+- [ ] `B3.13` Test invitation email recipients, content, authorization, expiry,
+  resend behavior and replay protection without making external mail requests.
 
 ### B3 gate
 
@@ -178,7 +202,8 @@ This backend work may begin after the portal gate, immediately before Expo work.
 - [ ] `B7.1` Implement unique artist follows.
 - [ ] `B7.2` Implement unique release and track favorites.
 - [ ] `B7.3` Implement private collections and ordered collection items.
-- [ ] `B7.4` Implement notification preferences by channel and topic.
+- [ ] `B7.4` Implement notification preferences by channel and topic, keeping
+  required account/security email separate from optional marketing consent.
 - [ ] `B7.5` Register devices and deactivate push tokens on logout or deletion.
 - [ ] `B7.6` Create an in-app notification model and paginated endpoint.
 - [ ] `B7.7` Implement user data export.
@@ -190,7 +215,19 @@ This backend work may begin after the portal gate, immediately before Expo work.
 ## B8 — Operations and backend release readiness
 
 - [ ] `B8.1` Configure production queues, retries and failed-job handling.
-- [ ] `B8.2` Configure transactional email and delivery monitoring.
+- [ ] `B8.2` Make Resend transactional email production-ready.
+  - [ ] `B8.2a` Configure scoped production credentials, verified sending
+    subdomain, SPF, DKIM, DMARC, sender identities and secret rotation.
+  - [ ] `B8.2b` Receive Resend delivery webhooks over HTTPS and verify the raw
+    request signature before processing any event.
+  - [ ] `B8.2c` Make webhook processing idempotent using `svix-id` and tolerate
+    duplicate and out-of-order delivery.
+  - [ ] `B8.2d` Store only necessary provider message IDs and delivery state;
+    handle delivered, bounced, complained, suppressed and failed outcomes.
+  - [ ] `B8.2e` Add metrics and alerts for queue failures, provider errors and
+    abnormal bounce or complaint rates without logging email bodies or secrets.
+  - [ ] `B8.2f` Test valid, invalid, replayed, duplicate and out-of-order webhooks,
+    then run a documented production-like delivery and bounce smoke test.
 - [ ] `B8.3` Add error monitoring and production-safe logging.
 - [ ] `B8.4` Document backup, restore and incident procedures.
 - [ ] `B8.5` Add database security and performance checks to release procedure.
@@ -206,6 +243,8 @@ This backend work may begin after the portal gate, immediately before Expo work.
 - [ ] A release can progress from draft to published.
 - [ ] Unauthorized and cross-tenant API operations are rejected and tested.
 - [ ] Database, queue, email, storage and monitoring integrations are documented.
+- [ ] Resend domain authentication, queued sending, idempotency, signed webhooks,
+  bounce handling and alerting have passed a production-like verification.
 
 ---
 
