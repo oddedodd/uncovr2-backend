@@ -12,6 +12,12 @@ class ReleaseActivityEvent extends Model
 {
     use HasPublicId;
 
+    protected static function booted(): void
+    {
+        static::updating(fn () => throw new \LogicException('Release activity events are immutable.'));
+        static::deleting(fn () => throw new \LogicException('Release activity events are immutable.'));
+    }
+
     public function release(): BelongsTo
     {
         return $this->belongsTo(Release::class);

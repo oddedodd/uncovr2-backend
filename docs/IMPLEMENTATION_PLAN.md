@@ -174,22 +174,22 @@ the source for product intent, roles, privacy requirements and MVP scope.
 
 ## B5 — Media, approval and publishing
 
-- [ ] `B5.1` Define private and public Supabase Storage buckets and retention rules.
-- [ ] `B5.2` Implement authorized upload requests without exposing server secrets.
-- [ ] `B5.3` Validate MIME type, size, ownership and image metadata.
-- [ ] `B5.4` Implement safe replacement and deletion of media.
-- [ ] `B5.5` Add release states: draft, review, scheduled, published, unpublished and archived.
-- [ ] `B5.6` Implement approval requests and decisions.
-- [ ] `B5.7` Implement permission-controlled publishing and unpublishing.
-- [ ] `B5.8` Implement scheduled publication through queues.
-- [ ] `B5.9` Produce immutable activity records for sensitive publication actions.
-- [ ] `B5.10` Test upload authorization, approval transitions and publishing rules.
+- [x] `B5.1` Define private and public Supabase Storage buckets and retention rules.
+- [x] `B5.2` Implement authorized upload requests without exposing server secrets.
+- [x] `B5.3` Validate MIME type, size, ownership and image metadata.
+- [x] `B5.4` Implement safe replacement and deletion of media.
+- [x] `B5.5` Add release states: draft, review, scheduled, published, unpublished and archived.
+- [x] `B5.6` Implement approval requests and decisions.
+- [x] `B5.7` Implement permission-controlled publishing and unpublishing.
+- [x] `B5.8` Implement scheduled publication through queues.
+- [x] `B5.9` Produce immutable activity records for sensitive publication actions.
+- [x] `B5.10` Test upload authorization, approval transitions and publishing rules.
 
 ### B5 gate
 
-- [ ] A draft can be previewed, submitted, approved and published.
-- [ ] Only authorized roles can approve or publish.
-- [ ] Published content remains separate from private drafts.
+- [x] A draft can be previewed, submitted, approved and published.
+- [x] Only authorized roles can approve or publish.
+- [x] Published content remains separate from private drafts.
 
 ## B6 — Public content API and discovery foundation
 

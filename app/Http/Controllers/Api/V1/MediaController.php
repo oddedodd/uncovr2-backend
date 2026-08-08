@@ -7,8 +7,10 @@ use App\Http\Requests\Api\V1\Releases\StoreMediaRequest;
 use App\Http\Requests\Api\V1\Releases\UpdateMediaRequest;
 use App\Http\Responses\ApiResponse;
 use App\Models\Artist;
+use App\Models\ContentBlock;
 use App\Models\Media;
 use App\Models\Organization;
+use App\Services\Media\MediaUploadService;
 use App\Services\Releases\ReleaseScopeResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -42,19 +44,24 @@ final class MediaController extends Controller
         return ApiResponse::success($this->resource($media));
     }
 
-    public function destroy(Request $request, Media $media): JsonResponse
+    public function destroy(Request $request, Media $media, MediaUploadService $service): JsonResponse
     {
         Gate::authorize('delete', $media);
         if ($media->releasesAsCover()->exists()) {
             throw ValidationException::withMessages(['media' => ['Media used as a release cover cannot be deleted.']]);
         }
-        $media->delete();
+        $driver = ContentBlock::query()->getConnection()->getDriverName();
+        $payloadExpression = $driver === 'pgsql' ? 'payload::text' : 'payload';
+        if (ContentBlock::query()->whereRaw("{$payloadExpression} LIKE ?", ['%'.$media->public_id.'%'])->exists()) {
+            throw ValidationException::withMessages(['media' => ['Media referenced by release content cannot be deleted.']]);
+        }
+        $service->delete($media);
 
         return ApiResponse::success(['message' => 'Media record deleted.']);
     }
 
     private function resource(Media $media): array
     {
-        return ['id' => $media->public_id, 'owner' => ['type' => $media->organization_id ? 'organization' : 'artist', 'id' => $media->organization?->public_id ?? $media->artist?->public_id], 'kind' => $media->kind, 'status' => $media->status, 'original_filename' => $media->original_filename, 'mime_type' => $media->mime_type, 'byte_size' => $media->byte_size, 'width' => $media->width, 'height' => $media->height, 'metadata' => $media->metadata];
+        return ['id' => $media->public_id, 'owner' => ['type' => $media->organization_id ? 'organization' : 'artist', 'id' => $media->organization?->public_id ?? $media->artist?->public_id], 'kind' => $media->kind, 'status' => $media->status, 'original_filename' => $media->original_filename, 'mime_type' => $media->mime_type, 'byte_size' => $media->byte_size, 'width' => $media->width, 'height' => $media->height, 'verified_at' => $media->verified_at?->utc()->format('Y-m-d\TH:i:s.v\Z'), 'metadata' => $media->metadata];
     }
 }

@@ -19,3 +19,11 @@ Schedule::command('auth:prune-device-sessions')
 Schedule::command('auth:clear-resets')
     ->hourly()
     ->withoutOverlapping();
+
+Schedule::command('releases:dispatch-scheduled')
+    ->everyMinute()
+    ->withoutOverlapping();
+
+Schedule::command('media:prune-uploads')
+    ->hourly()
+    ->withoutOverlapping();

@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\ReleaseStatus;
 use App\Models\Release;
 use App\Models\User;
 use App\Services\Authorization\ScopeAccess;
@@ -17,6 +18,9 @@ final class ReleasePolicy
 
     public function update(User $user, Release $release): bool
     {
+        if (! in_array($release->status, [ReleaseStatus::Draft->value, ReleaseStatus::Unpublished->value], true)) {
+            return false;
+        }
         if (! $this->canViewOwner($user, $release)) {
             return false;
         }
@@ -27,7 +31,32 @@ final class ReleasePolicy
 
     public function delete(User $user, Release $release): bool
     {
-        return $this->update($user, $release) && $release->status === 'draft';
+        return $this->update($user, $release) && $release->status === ReleaseStatus::Draft->value;
+    }
+
+    public function submit(User $user, Release $release): bool
+    {
+        return $this->update($user, $release);
+    }
+
+    public function approve(User $user, Release $release): bool
+    {
+        return $this->canManageOwner($user, $release);
+    }
+
+    public function publish(User $user, Release $release): bool
+    {
+        return $this->canManageOwner($user, $release);
+    }
+
+    public function unpublish(User $user, Release $release): bool
+    {
+        return $this->canManageOwner($user, $release);
+    }
+
+    public function archive(User $user, Release $release): bool
+    {
+        return $this->canManageOwner($user, $release);
     }
 
     public function manageEditors(User $user, Release $release): bool

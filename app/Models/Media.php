@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['organization_id', 'artist_id', 'kind', 'status', 'original_filename', 'mime_type', 'byte_size', 'width', 'height', 'storage_disk', 'storage_key', 'metadata', 'created_by_user_id', 'updated_by_user_id'])]
+#[Fillable(['organization_id', 'artist_id', 'kind', 'status', 'original_filename', 'mime_type', 'byte_size', 'width', 'height', 'storage_disk', 'storage_key', 'active_upload_id', 'verified_at', 'metadata', 'created_by_user_id', 'updated_by_user_id'])]
 class Media extends Model
 {
     use HasPublicId, SoftDeletes;
@@ -33,8 +33,18 @@ class Media extends Model
         return $this->hasMany(Release::class, 'cover_media_id');
     }
 
+    public function uploads(): HasMany
+    {
+        return $this->hasMany(MediaUpload::class);
+    }
+
+    public function activeUpload(): BelongsTo
+    {
+        return $this->belongsTo(MediaUpload::class, 'active_upload_id');
+    }
+
     protected function casts(): array
     {
-        return ['byte_size' => 'integer', 'width' => 'integer', 'height' => 'integer', 'metadata' => 'array'];
+        return ['byte_size' => 'integer', 'width' => 'integer', 'height' => 'integer', 'verified_at' => 'immutable_datetime', 'metadata' => 'array'];
     }
 }

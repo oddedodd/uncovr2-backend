@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['organization_id', 'artist_id', 'type', 'status', 'title', 'subtitle', 'description', 'release_date', 'upc', 'cover_media_id', 'created_by_user_id', 'updated_by_user_id'])]
+#[Fillable(['organization_id', 'artist_id', 'type', 'status', 'title', 'subtitle', 'description', 'release_date', 'upc', 'cover_media_id', 'created_by_user_id', 'updated_by_user_id', 'submitted_at', 'approved_at', 'approved_by_user_id', 'approved_fingerprint', 'scheduled_for', 'published_at', 'published_by_user_id', 'unpublished_at', 'archived_at', 'publication_version'])]
 class Release extends Model
 {
     use HasPublicId, SoftDeletes;
@@ -88,6 +88,16 @@ class Release extends Model
         return $this->hasMany(ReleaseActivityEvent::class);
     }
 
+    public function approvalRequests(): HasMany
+    {
+        return $this->hasMany(ReleaseApprovalRequest::class);
+    }
+
+    public function publications(): HasMany
+    {
+        return $this->hasMany(ReleasePublication::class);
+    }
+
     public function ownerType(): string
     {
         return $this->organization_id ? 'organization' : 'artist';
@@ -95,6 +105,11 @@ class Release extends Model
 
     protected function casts(): array
     {
-        return ['type' => ReleaseType::class, 'release_date' => 'immutable_date'];
+        return [
+            'type' => ReleaseType::class, 'release_date' => 'immutable_date',
+            'submitted_at' => 'immutable_datetime', 'approved_at' => 'immutable_datetime', 'scheduled_for' => 'immutable_datetime',
+            'published_at' => 'immutable_datetime', 'unpublished_at' => 'immutable_datetime', 'archived_at' => 'immutable_datetime',
+            'publication_version' => 'integer',
+        ];
     }
 }

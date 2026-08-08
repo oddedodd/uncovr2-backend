@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Contracts\MediaStorage;
 use App\Mail\Transport\ResendTransport;
 use App\Models\Artist;
 use App\Models\ArtistMembership;
@@ -19,6 +20,7 @@ use App\Policies\OrganizationArtistRelationshipPolicy;
 use App\Policies\OrganizationMembershipPolicy;
 use App\Policies\OrganizationPolicy;
 use App\Policies\ReleasePolicy;
+use App\Services\Media\SupabaseMediaStorage;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -35,7 +37,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(MediaStorage::class, SupabaseMediaStorage::class);
     }
 
     /**
