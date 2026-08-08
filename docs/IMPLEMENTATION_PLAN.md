@@ -153,24 +153,24 @@ the source for product intent, roles, privacy requirements and MVP scope.
 
 ## B4 — Release and content domain
 
-- [ ] `B4.1` Create releases with album, EP and single types.
-- [ ] `B4.2` Create release-to-artist relationships with a primary artist.
-- [ ] `B4.3` Create ordered tracks.
-- [ ] `B4.4` Create ordered pages belonging to releases or tracks.
-- [ ] `B4.5` Create versioned, validated content blocks.
-- [ ] `B4.6` Support initial block types: heading, text, image, gallery, video, quote and lyrics.
-- [ ] `B4.7` Create streaming links with validated service and URL fields.
-- [ ] `B4.8` Create structured credits and contributor information.
-- [ ] `B4.9` Create media records independently of storage implementation.
-- [ ] `B4.10` Preserve creator, owner, editors and modification history.
-- [ ] `B4.11` Implement CRUD endpoints protected by B3 policies.
-- [ ] `B4.12` Test ordering, ownership, assignments and cross-tenant isolation.
+- [x] `B4.1` Create releases with album, EP and single types.
+- [x] `B4.2` Create release-to-artist relationships with a primary artist.
+- [x] `B4.3` Create ordered tracks.
+- [x] `B4.4` Create ordered pages belonging to releases or tracks.
+- [x] `B4.5` Create versioned, validated content blocks.
+- [x] `B4.6` Support initial block types: heading, text, image, gallery, video, quote and lyrics.
+- [x] `B4.7` Create streaming links with validated service and URL fields.
+- [x] `B4.8` Create structured credits and contributor information.
+- [x] `B4.9` Create media records independently of storage implementation.
+- [x] `B4.10` Preserve creator, owner, editors and modification history.
+- [x] `B4.11` Implement CRUD endpoints protected by B3 policies.
+- [x] `B4.12` Test ordering, ownership, assignments and cross-tenant isolation.
 
 ### B4 gate
 
-- [ ] An authorized artist or label user can create a complete draft release.
-- [ ] The draft can contain tracks, pages, blocks, links, media references and credits.
-- [ ] Users outside the owning scope cannot read drafts or modify content.
+- [x] An authorized artist or label user can create a complete draft release.
+- [x] The draft can contain tracks, pages, blocks, links, media references and credits.
+- [x] Users outside the owning scope cannot read drafts or modify content.
 
 ## B5 — Media, approval and publishing
 

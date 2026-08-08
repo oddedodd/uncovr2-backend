@@ -27,12 +27,14 @@ The domain keeps these concepts separate:
 - **Creator:** immutable attribution through `created_by_user_id`; it does not
   grant permanent access by itself.
 - **Owner scope:** the organization or artist to which an editable resource
-  belongs. B4 resources will store that scope explicitly.
+  belongs. Releases, media and contributors store exactly one such scope.
 - **Managing party:** a time-bounded row in
   `organization_artist_relationships`; artists are never owned permanently by
   a label.
 - **Explicit editor:** an active `label_user` or `artist_user` membership, and
-  later a resource assignment inside that scope.
+  a `release_editor` assignment inside that scope. Creating a release creates
+  this assignment for the creator, while scope administrators may grant or
+  revoke assignments for other active scope members.
 
 Laravel Policies combine those facts for every operation. Controllers never
 accept a role or owner claim from the client as proof of access.
@@ -44,3 +46,11 @@ and are single use. Only a SHA-256 hash is stored in the invitation table. The
 queued notification is encrypted, and resending rotates the token and expiry.
 Acceptance locks the invitation row before creating the membership, preventing
 two concurrent requests from consuming the same invitation.
+
+## Draft releases
+
+Everyone with an active membership in the owner scope may read its drafts.
+Only scope administrators and explicitly assigned release editors may modify
+them. Creator attribution alone never bypasses a revoked membership. An
+artist-owned release also follows active organization-to-artist relationships,
+so ending the managing relationship removes the label's derived access.
