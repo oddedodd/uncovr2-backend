@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Releases\FeatureReleaseRequest;
 use App\Http\Requests\Api\V1\Releases\ReleaseDecisionRequest;
 use App\Http\Requests\Api\V1\Releases\ScheduleReleaseRequest;
 use App\Http\Resources\ReleaseResource;
@@ -71,6 +72,13 @@ final class ReleasePublicationController extends Controller
         Gate::authorize('archive', $release);
 
         return $this->release($service->archive($release, $request->user()));
+    }
+
+    public function feature(FeatureReleaseRequest $request, Release $release, ReleasePublicationService $service): JsonResponse
+    {
+        Gate::authorize('feature', $release);
+
+        return $this->release($service->feature($release, $request->user(), $request->boolean('featured')));
     }
 
     private function release(Release $release): JsonResponse

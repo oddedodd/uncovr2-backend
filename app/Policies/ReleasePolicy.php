@@ -64,6 +64,11 @@ final class ReleasePolicy
         return $this->canManageOwner($user, $release);
     }
 
+    public function feature(User $user, Release $release): bool
+    {
+        return $user->is_superadmin;
+    }
+
     private function canViewOwner(User $user, Release $release): bool
     {
         return $release->organization_id

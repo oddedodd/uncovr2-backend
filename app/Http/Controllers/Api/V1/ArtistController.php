@@ -12,6 +12,7 @@ use App\Http\Responses\ApiResponse;
 use App\Models\Artist;
 use App\Services\Artists\ArtistService;
 use App\Services\Auth\SecurityAuditLogger;
+use App\Services\PublicApi\PublicCatalogCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -51,20 +52,22 @@ final class ArtistController extends Controller
         return ApiResponse::success((new ArtistResource($artist->load('profile')))->resolve());
     }
 
-    public function update(UpdateArtistRequest $request, Artist $artist): JsonResponse
+    public function update(UpdateArtistRequest $request, Artist $artist, PublicCatalogCache $cache): JsonResponse
     {
         Gate::authorize('update', $artist);
         $artist->profile()->update($request->validated());
+        $cache->invalidate();
 
         return ApiResponse::success((new ArtistResource($artist->load('profile')))->resolve());
     }
 
-    public function updateStatus(UpdateScopeStatusRequest $request, Artist $artist, SecurityAuditLogger $audit): JsonResponse
+    public function updateStatus(UpdateScopeStatusRequest $request, Artist $artist, SecurityAuditLogger $audit, PublicCatalogCache $cache): JsonResponse
     {
         Gate::authorize('suspend', $artist);
         $status = $request->string('status')->toString();
         $artist->update(['status' => $status, 'suspended_at' => $status === 'suspended' ? now() : null]);
         $audit->record('artist.status_changed', $request->user(), $request, metadata: ['artist_id' => $artist->public_id, 'status' => $status]);
+        $cache->invalidate();
 
         return ApiResponse::success((new ArtistResource($artist->load('profile')))->resolve());
     }

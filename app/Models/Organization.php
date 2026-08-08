@@ -36,6 +36,11 @@ class Organization extends Model
         return $this->hasMany(OrganizationArtistRelationship::class);
     }
 
+    public function releases(): HasMany
+    {
+        return $this->hasMany(Release::class);
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by_user_id');

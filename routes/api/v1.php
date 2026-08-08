@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\OrganizationInvitationController;
 use App\Http\Controllers\Api\V1\OrganizationMembershipController;
 use App\Http\Controllers\Api\V1\PageController;
+use App\Http\Controllers\Api\V1\PublicCatalogController;
 use App\Http\Controllers\Api\V1\ReleaseActivityController;
 use App\Http\Controllers\Api\V1\ReleaseArtistController;
 use App\Http\Controllers\Api\V1\ReleaseController;
@@ -39,6 +40,18 @@ Route::middleware('throttle:public')->group(function (): void {
         'service' => 'uncovr',
         'version' => 'v1',
     ]))->name('index');
+
+    Route::prefix('public')->name('public.')->group(function (): void {
+        Route::get('/labels', [PublicCatalogController::class, 'labels'])->name('labels.index');
+        Route::get('/labels/{label}', [PublicCatalogController::class, 'label'])->name('labels.show');
+        Route::get('/artists', [PublicCatalogController::class, 'artists'])->name('artists.index');
+        Route::get('/artists/{artist}', [PublicCatalogController::class, 'artist'])->name('artists.show');
+        Route::get('/releases/recent', [PublicCatalogController::class, 'recent'])->name('releases.recent');
+        Route::get('/releases/featured', [PublicCatalogController::class, 'featured'])->name('releases.featured');
+        Route::get('/releases', [PublicCatalogController::class, 'releases'])->name('releases.index');
+        Route::get('/releases/{release}', [PublicCatalogController::class, 'release'])->name('releases.show');
+        Route::get('/tracks/{track}', [PublicCatalogController::class, 'track'])->name('tracks.show');
+    });
 });
 
 Route::prefix('health')->name('health.')->group(function (): void {
@@ -119,6 +132,7 @@ Route::middleware(['auth:sanctum', 'active-device-session', 'throttle:authentica
         Route::post('/releases/{release}/publish', [ReleasePublicationController::class, 'publish'])->name('releases.publish');
         Route::post('/releases/{release}/unpublish', [ReleasePublicationController::class, 'unpublish'])->name('releases.unpublish');
         Route::post('/releases/{release}/archive', [ReleasePublicationController::class, 'archive'])->name('releases.archive');
+        Route::patch('/releases/{release}/featured', [ReleasePublicationController::class, 'feature'])->name('releases.featured.update');
         Route::get('/releases/{release}/activity', [ReleaseActivityController::class, 'index'])->name('releases.activity.index');
         Route::post('/releases/{release}/artists', [ReleaseArtistController::class, 'store'])->name('releases.artists.store');
         Route::delete('/releases/{release}/artists/{artist}', [ReleaseArtistController::class, 'destroy'])->name('releases.artists.destroy');

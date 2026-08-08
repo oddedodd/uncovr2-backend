@@ -193,13 +193,13 @@ the source for product intent, roles, privacy requirements and MVP scope.
 
 ## B6 — Public content API and discovery foundation
 
-- [ ] `B6.1` Implement public label, artist, release and track representations.
-- [ ] `B6.2` Return only published and currently available content.
-- [ ] `B6.3` Add paginated search for labels, artists and releases.
-- [ ] `B6.4` Add featured and recent-release endpoints.
-- [ ] `B6.5` Add cache headers and safe server-side caching.
-- [ ] `B6.6` Prevent drafts, internal notes and private membership data from leaking.
-- [ ] `B6.7` Add contract tests for all public representations.
+- [x] `B6.1` Implement public label, artist, release and track representations.
+- [x] `B6.2` Return only published and currently available content.
+- [x] `B6.3` Add paginated search for labels, artists and releases.
+- [x] `B6.4` Add featured and recent-release endpoints.
+- [x] `B6.5` Add cache headers and safe server-side caching.
+- [x] `B6.6` Prevent drafts, internal notes and private membership data from leaking.
+- [x] `B6.7` Add contract tests for all public representations.
 
 ## B7 — Listener domain, privacy and notifications
 

@@ -12,6 +12,7 @@ use App\Http\Responses\ApiResponse;
 use App\Models\Organization;
 use App\Services\Auth\SecurityAuditLogger;
 use App\Services\Organizations\OrganizationService;
+use App\Services\PublicApi\PublicCatalogCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -44,20 +45,22 @@ final class OrganizationController extends Controller
         return ApiResponse::success((new OrganizationResource($organization->load('profile')))->resolve());
     }
 
-    public function update(UpdateOrganizationRequest $request, Organization $organization): JsonResponse
+    public function update(UpdateOrganizationRequest $request, Organization $organization, PublicCatalogCache $cache): JsonResponse
     {
         Gate::authorize('update', $organization);
         $organization->profile()->update($request->validated());
+        $cache->invalidate();
 
         return ApiResponse::success((new OrganizationResource($organization->load('profile')))->resolve());
     }
 
-    public function updateStatus(UpdateScopeStatusRequest $request, Organization $organization, SecurityAuditLogger $audit): JsonResponse
+    public function updateStatus(UpdateScopeStatusRequest $request, Organization $organization, SecurityAuditLogger $audit, PublicCatalogCache $cache): JsonResponse
     {
         Gate::authorize('suspend', $organization);
         $status = $request->string('status')->toString();
         $organization->update(['status' => $status, 'suspended_at' => $status === 'suspended' ? now() : null]);
         $audit->record('organization.status_changed', $request->user(), $request, metadata: ['organization_id' => $organization->public_id, 'status' => $status]);
+        $cache->invalidate();
 
         return ApiResponse::success((new OrganizationResource($organization->load('profile')))->resolve());
     }

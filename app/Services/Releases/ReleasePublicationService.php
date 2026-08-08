@@ -7,6 +7,7 @@ use App\Enums\ReleaseStatus;
 use App\Models\Release;
 use App\Models\ReleaseApprovalRequest;
 use App\Models\User;
+use App\Services\PublicApi\PublicCatalogCache;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -17,6 +18,7 @@ final class ReleasePublicationService
         private readonly ReleaseSnapshotBuilder $snapshots,
         private readonly ReleaseActivityLogger $activity,
         private readonly MediaStorage $storage,
+        private readonly PublicCatalogCache $publicCache,
     ) {}
 
     public function preview(Release $release): array
@@ -110,14 +112,27 @@ final class ReleasePublicationService
         $snapshot['lifecycle']['publication_version'] = $version;
         $snapshot['media'] = $mediaUrls;
 
-        return DB::transaction(function () use ($release, $actor, $version, $snapshot, $publishedAt): Release {
+        $published = DB::transaction(function () use ($release, $actor, $version, $snapshot, $publishedAt): Release {
             $locked = Release::query()->lockForUpdate()->findOrFail($release->getKey());
             $this->assertApproved($locked);
             $locked->publications()->whereNull('withdrawn_at')->update(['withdrawn_at' => now()]);
             $publication = $locked->publications()->create([
                 'version' => $version, 'content_fingerprint' => $locked->approved_fingerprint,
+                'title' => $snapshot['title'], 'subtitle' => $snapshot['subtitle'],
+                'primary_artist_name' => collect($snapshot['artists'])->firstWhere('is_primary', true)['name'] ?? null,
+                'release_type' => $snapshot['type'], 'release_date' => $snapshot['release_date'],
+                'cover_url' => $snapshot['media'][$snapshot['cover_media_id']] ?? null,
+                'search_text' => trim(implode(' ', array_filter([
+                    $snapshot['title'], $snapshot['subtitle'],
+                    collect($snapshot['artists'])->pluck('name')->implode(' '),
+                    collect($snapshot['tracks'])->pluck('title')->implode(' '),
+                ]))),
                 'snapshot' => $snapshot, 'published_by_user_id' => $actor->getKey(), 'published_at' => $publishedAt,
             ]);
+            $publication->tracks()->createMany(collect($snapshot['tracks'])->map(fn (array $track) => [
+                'track_public_id' => $track['id'], 'position' => $track['position'], 'title' => $track['title'],
+                'duration_ms' => $track['duration_ms'], 'snapshot' => $track,
+            ])->all());
             $locked->update([
                 'status' => ReleaseStatus::Published->value, 'publication_version' => $version,
                 'published_at' => $publishedAt, 'published_by_user_id' => $actor->getKey(),
@@ -127,11 +142,14 @@ final class ReleasePublicationService
 
             return $locked->fresh();
         });
+        $this->publicCache->invalidate();
+
+        return $published;
     }
 
     public function unpublish(Release $release, User $actor): Release
     {
-        return DB::transaction(function () use ($release, $actor): Release {
+        $unpublished = DB::transaction(function () use ($release, $actor): Release {
             $locked = Release::query()->lockForUpdate()->findOrFail($release->getKey());
             if ($locked->status !== ReleaseStatus::Published->value) {
                 throw ValidationException::withMessages(['status' => ['Only a published release can be unpublished.']]);
@@ -142,6 +160,26 @@ final class ReleasePublicationService
 
             return $locked->fresh();
         });
+        $this->publicCache->invalidate();
+
+        return $unpublished;
+    }
+
+    public function feature(Release $release, User $actor, bool $featured): Release
+    {
+        $updated = DB::transaction(function () use ($release, $actor, $featured): Release {
+            $locked = Release::query()->lockForUpdate()->findOrFail($release->getKey());
+            if ($locked->status !== ReleaseStatus::Published->value) {
+                throw ValidationException::withMessages(['release' => ['Only a published release can be featured.']]);
+            }
+            $locked->update(['featured_at' => $featured ? now() : null]);
+            $this->activity->record($locked, $actor, $featured ? 'release.featured' : 'release.unfeatured', $locked);
+
+            return $locked->fresh();
+        });
+        $this->publicCache->invalidate();
+
+        return $updated;
     }
 
     public function archive(Release $release, User $actor): Release

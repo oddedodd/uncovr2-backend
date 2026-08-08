@@ -31,6 +31,16 @@ class Artist extends Model
         return $this->hasMany(OrganizationArtistRelationship::class);
     }
 
+    public function ownedReleases(): HasMany
+    {
+        return $this->hasMany(Release::class);
+    }
+
+    public function releaseLinks(): HasMany
+    {
+        return $this->hasMany(ReleaseArtist::class);
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by_user_id');
