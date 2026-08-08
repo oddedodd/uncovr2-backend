@@ -127,29 +127,29 @@ the source for product intent, roles, privacy requirements and MVP scope.
 
 ## B3 — Organizations, artists, roles and authorization
 
-- [ ] `B3.1` Create organizations and organization profiles.
-- [ ] `B3.2` Create organization memberships with `label_admin` and `label_user` roles.
-- [ ] `B3.3` Create organization invitations with expiry, single-use acceptance
+- [x] `B3.1` Create organizations and organization profiles.
+- [x] `B3.2` Create organization memberships with `label_admin` and `label_user` roles.
+- [x] `B3.3` Create organization invitations with expiry, single-use acceptance
   and a queued Resend invitation notification.
-- [ ] `B3.4` Create artists and artist profiles.
-- [ ] `B3.5` Create artist memberships with `artist_admin` and `artist_user` roles.
-- [ ] `B3.6` Create organization-to-artist relationships without hard-coding permanent ownership.
-- [ ] `B3.7` Implement platform-level superadmin authorization.
-- [ ] `B3.8` Add creator, owner, managing party and explicit editor concepts to editable resources.
-- [ ] `B3.9` Implement Laravel Policies for organizations, artists and memberships.
-- [ ] `B3.10` Ensure access can be granted at multiple scopes to the same user.
-- [ ] `B3.11` Log invitations, role changes, suspensions and membership removal.
-- [ ] `B3.12` Add a complete authorization matrix as automated feature tests.
-- [ ] `B3.13` Test invitation email recipients, content, authorization, expiry,
+- [x] `B3.4` Create artists and artist profiles.
+- [x] `B3.5` Create artist memberships with `artist_admin` and `artist_user` roles.
+- [x] `B3.6` Create organization-to-artist relationships without hard-coding permanent ownership.
+- [x] `B3.7` Implement platform-level superadmin authorization.
+- [x] `B3.8` Add creator, owner, managing party and explicit editor concepts to editable resources.
+- [x] `B3.9` Implement Laravel Policies for organizations, artists and memberships.
+- [x] `B3.10` Ensure access can be granted at multiple scopes to the same user.
+- [x] `B3.11` Log invitations, role changes, suspensions and membership removal.
+- [x] `B3.12` Add a complete authorization matrix as automated feature tests.
+- [x] `B3.13` Test invitation email recipients, content, authorization, expiry,
   resend behavior and replay protection without making external mail requests.
 
 ### B3 gate
 
-- [ ] Superadmin can see and manage the whole platform.
-- [ ] Label Admin can manage only its label, artists and team.
-- [ ] Artist Admin can manage only its artist and team.
-- [ ] Label User and Artist User can change only owned or assigned resources.
-- [ ] Removing membership immediately removes its access.
+- [x] Superadmin can see and manage the whole platform.
+- [x] Label Admin can manage only its label, artists and team.
+- [x] Artist Admin can manage only its artist and team.
+- [x] Label User and Artist User can change only owned or assigned resources.
+- [x] Removing membership immediately removes its access.
 
 ## B4 — Release and content domain
 

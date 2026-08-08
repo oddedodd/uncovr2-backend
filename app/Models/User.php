@@ -37,6 +37,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(DeviceSession::class);
     }
 
+    public function organizationMemberships(): HasMany
+    {
+        return $this->hasMany(OrganizationMembership::class);
+    }
+
+    public function artistMemberships(): HasMany
+    {
+        return $this->hasMany(ArtistMembership::class);
+    }
+
     public function sendEmailVerificationNotification(): void
     {
         DB::transaction(function (): void {
@@ -78,6 +88,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'email_verification_version' => 'integer',
+            'is_superadmin' => 'boolean',
             'password' => 'hashed',
         ];
     }

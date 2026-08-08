@@ -3,8 +3,19 @@
 namespace App\Providers;
 
 use App\Mail\Transport\ResendTransport;
+use App\Models\Artist;
+use App\Models\ArtistMembership;
+use App\Models\Organization;
+use App\Models\OrganizationArtistRelationship;
+use App\Models\OrganizationMembership;
+use App\Policies\ArtistMembershipPolicy;
+use App\Policies\ArtistPolicy;
+use App\Policies\OrganizationArtistRelationshipPolicy;
+use App\Policies\OrganizationMembershipPolicy;
+use App\Policies\OrganizationPolicy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
@@ -26,6 +37,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(Organization::class, OrganizationPolicy::class);
+        Gate::policy(OrganizationMembership::class, OrganizationMembershipPolicy::class);
+        Gate::policy(OrganizationArtistRelationship::class, OrganizationArtistRelationshipPolicy::class);
+        Gate::policy(Artist::class, ArtistPolicy::class);
+        Gate::policy(ArtistMembership::class, ArtistMembershipPolicy::class);
+        Gate::before(fn ($user): ?bool => $user->is_superadmin ? true : null);
         $this->configureResendTransport();
         $this->configureRateLimiting();
         $this->validateEmailConfiguration();

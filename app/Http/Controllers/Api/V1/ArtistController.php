@@ -1,0 +1,71 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Enums\MembershipStatus;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\StoreArtistRequest;
+use App\Http\Requests\Api\V1\UpdateArtistRequest;
+use App\Http\Requests\Api\V1\UpdateScopeStatusRequest;
+use App\Http\Resources\ArtistResource;
+use App\Http\Responses\ApiResponse;
+use App\Models\Artist;
+use App\Services\Artists\ArtistService;
+use App\Services\Auth\SecurityAuditLogger;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+
+final class ArtistController extends Controller
+{
+    public function index(Request $request): JsonResponse
+    {
+        $query = Artist::query()->with('profile')->orderBy('public_id');
+        if (! $request->user()->is_superadmin) {
+            $query->where('status', 'active')->where(function ($scope) use ($request): void {
+                $scope->whereHas('memberships', fn ($memberships) => $memberships
+                    ->where('user_id', $request->user()->getKey())
+                    ->where('status', MembershipStatus::Active->value))
+                    ->orWhereHas('organizationRelationships', fn ($relationships) => $relationships
+                        ->whereNull('ended_at')
+                        ->whereHas('organization.memberships', fn ($memberships) => $memberships
+                            ->where('user_id', $request->user()->getKey())
+                            ->where('status', MembershipStatus::Active->value)));
+            });
+        }
+
+        return ApiResponse::success($query->get()->map(fn ($item) => (new ArtistResource($item))->resolve())->all());
+    }
+
+    public function store(StoreArtistRequest $request, ArtistService $service): JsonResponse
+    {
+        $artist = $service->create($request->user(), $request->validated());
+
+        return ApiResponse::success((new ArtistResource($artist))->resolve(), 201);
+    }
+
+    public function show(Artist $artist): JsonResponse
+    {
+        Gate::authorize('view', $artist);
+
+        return ApiResponse::success((new ArtistResource($artist->load('profile')))->resolve());
+    }
+
+    public function update(UpdateArtistRequest $request, Artist $artist): JsonResponse
+    {
+        Gate::authorize('update', $artist);
+        $artist->profile()->update($request->validated());
+
+        return ApiResponse::success((new ArtistResource($artist->load('profile')))->resolve());
+    }
+
+    public function updateStatus(UpdateScopeStatusRequest $request, Artist $artist, SecurityAuditLogger $audit): JsonResponse
+    {
+        Gate::authorize('suspend', $artist);
+        $status = $request->string('status')->toString();
+        $artist->update(['status' => $status, 'suspended_at' => $status === 'suspended' ? now() : null]);
+        $audit->record('artist.status_changed', $request->user(), $request, metadata: ['artist_id' => $artist->public_id, 'status' => $status]);
+
+        return ApiResponse::success((new ArtistResource($artist->load('profile')))->resolve());
+    }
+}
