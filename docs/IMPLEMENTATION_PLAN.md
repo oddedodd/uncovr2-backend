@@ -1,6 +1,6 @@
 # Uncovr 2.0 implementation plan
 
-Last updated: 2026-08-07
+Last updated: 2026-08-09
 
 This roadmap translates the Uncovr 2.0 product plan into an ordered delivery
 sequence for Codex. It is the operational plan; the full product plan remains
@@ -14,7 +14,7 @@ the source for product intent, roles, privacy requirements and MVP scope.
 - Checkboxes are updated only after relevant tests and acceptance criteria pass.
 - Every task has a stable ID, such as `B2.4`, which can be referenced in a Codex prompt.
 - We complete each phase gate before starting the next product surface.
-- Expo work does not begin until the Laravel API and Next.js portal pass their gates.
+- Expo work does not begin until the Laravel API and React portal pass their gates.
 
 ## Fixed architecture decisions
 
@@ -25,7 +25,22 @@ the source for product intent, roles, privacy requirements and MVP scope.
   Notifications so domain code is not coupled directly to the provider SDK.
 - Laravel tables live in the private `laravel` schema.
 - Clients never connect directly to Laravel's database tables.
-- The Next.js portal is the working interface for superadmins, labels and artists.
+- The portal is a React and TypeScript single-page application built with Vite,
+  React Router Data Mode and TanStack Query.
+- The portal lives in a separate `uncover-portal` Git repository beside the
+  `uncover-backend` repository.
+- Laravel is the portal's only backend. Portal code calls the versioned Laravel
+  API directly and must not duplicate authentication, authorization, validation
+  or domain logic in a frontend server layer.
+- Production uses `https://admin.uncovr.no` for the statically hosted portal and
+  `https://api.uncovr.no` for Laravel. Both must remain below the same
+  registrable domain so Laravel Sanctum can use first-party session cookies.
+- Local development uses `http://localhost:5173` for Vite and
+  `http://localhost:8000` for Laravel. Both processes must use `localhost`
+  consistently rather than mixing it with `127.0.0.1`.
+- The portal uses Laravel Sanctum's stateful session cookie and CSRF flow, never
+  browser-stored access or refresh tokens. Credentialed CORS is restricted to
+  the exact portal origin in each environment.
 - The Expo app is the listener interface and is deferred until the portal is usable end to end.
 - One user account may be a listener and hold memberships in several labels or artists.
 - Roles grant scope; Laravel Policies enforce access on every protected operation.
@@ -34,7 +49,7 @@ the source for product intent, roles, privacy requirements and MVP scope.
 ## Delivery order
 
 1. `B` — Laravel backend and API.
-2. `P` — Next.js portal.
+2. `P` — React portal.
 3. `M` — Expo listener app.
 
 ---
@@ -254,23 +269,33 @@ This backend work may begin after the portal gate, immediately before Expo work.
 
 ---
 
-# P — Next.js portal
+# P — React portal
 
 Portal work begins only after the backend phase gate passes for B1 through B6.
 
 ## P0 — Portal foundation
 
-- [ ] `P0.1` Decide and document whether the portal uses a separate repository or workspace.
-- [ ] `P0.2` Scaffold current stable Next.js with TypeScript and pinned dependencies.
-- [ ] `P0.3` Add formatting, linting, tests and CI.
-- [ ] `P0.4` Configure environment validation and the Laravel API base URL.
-- [ ] `P0.5` Build a typed API client with consistent error handling.
-- [ ] `P0.6` Establish accessible layout, forms, feedback and responsive breakpoints.
+- [x] `P0.1` Use a separate sibling Git repository named `uncover-portal`.
+- [ ] `P0.2` Scaffold current stable React and TypeScript with Vite and pin dependencies.
+- [ ] `P0.3` Add React Router in Data Mode and TanStack Query without introducing a frontend server layer.
+- [ ] `P0.4` Add formatting, linting, unit tests and CI.
+- [ ] `P0.5` Validate environment variables and configure the Laravel API base URL as
+  `http://localhost:8000` locally and `https://api.uncovr.no` in production.
+- [ ] `P0.6` Build a typed API client with credentialed requests, CSRF support,
+  consistent API errors and request IDs.
+- [ ] `P0.7` Configure local development on `http://localhost:5173` and document
+  that portal and API must use the same `localhost` hostname.
+- [ ] `P0.8` Configure static SPA hosting at `https://admin.uncovr.no`, including
+  history fallback so direct navigation to client routes serves `index.html`.
+- [ ] `P0.9` Align Laravel CORS, Sanctum stateful domains and session-cookie settings
+  with the exact local and production portal origins.
+- [ ] `P0.10` Establish accessible layout, forms, feedback and responsive breakpoints.
 
 ## P1 — Authentication and role-aware shell
 
 - [ ] `P1.1` Build registration, login, verification and password-reset screens.
-- [ ] `P1.2` Integrate Laravel's secure cookie and CSRF flow.
+- [ ] `P1.2` Initialize CSRF through `/sanctum/csrf-cookie`, authenticate with
+  Laravel's secure HTTP-only session cookie and send credentials on every API request.
 - [ ] `P1.3` Build account, active-session and logout screens.
 - [ ] `P1.4` Load the current user's memberships and available workspaces.
 - [ ] `P1.5` Build role-aware navigation without treating hidden UI as authorization.
@@ -417,5 +442,7 @@ without new evidence.
 |---|---|---|
 | 2026-08-07 | Laravel owns authentication; Supabase Auth is not used. | Keeps identity, roles and business authorization in one system. |
 | 2026-08-07 | Laravel data uses the private `laravel` schema. | Prevents accidental exposure through Supabase Data API. |
-| 2026-08-07 | Next.js is the only operational UI for platform, label and artist users. | Avoids duplicate Laravel and Next.js admin interfaces. |
+| 2026-08-07 | Next.js was selected as the only operational UI for platform, label and artist users. | Superseded on 2026-08-09 after the portal and backend responsibilities were clarified. |
+| 2026-08-09 | The operational portal is a React and TypeScript SPA built with Vite, React Router Data Mode and TanStack Query in a separate `uncover-portal` repository. | The authenticated portal does not need SEO or server rendering; static hosting keeps Laravel as the single backend and avoids a redundant frontend server layer. |
+| 2026-08-09 | Production uses `admin.uncovr.no` for the portal and `api.uncovr.no` for Laravel; local development uses `localhost:5173` and `localhost:8000`. | The shared registrable domain enables Sanctum session cookies in production, while explicit local origins keep credentialed CORS and CSRF behavior predictable. |
 | 2026-08-07 | Expo begins only after the full portal release workflow passes. | Proves content production before building the listener client. |
