@@ -41,11 +41,19 @@ accept a role or owner claim from the client as proof of access.
 
 ## Invitations
 
-Organization invitations are email-bound, expire after 72 hours by default,
-and are single use. Only a SHA-256 hash is stored in the invitation table. The
-queued notification is encrypted, and resending rotates the token and expiry.
-Acceptance locks the invitation row before creating the membership, preventing
-two concurrent requests from consuming the same invitation.
+Organization and artist invitations are email-bound, expire after 72 hours by
+default, and are single use. Only a SHA-256 hash is stored in the invitation
+table. Queued notifications are encrypted and dispatched only after the
+surrounding transaction commits; resending rotates the token and expiry.
+Acceptance locks the invitation and parent scope before creating the membership,
+preventing two concurrent requests from consuming the same invitation.
+
+Superadmin label onboarding creates the organization, profile and first
+`label_admin` invitation atomically without granting the superadmin ordinary
+label membership. Label Admin artist onboarding creates the artist, profile,
+active label relationship and first `artist_admin` invitation atomically. The
+Label Admin receives no artist membership unless `creator_role` is explicitly
+supplied. Creator attribution alone never grants access.
 
 ## Draft releases
 

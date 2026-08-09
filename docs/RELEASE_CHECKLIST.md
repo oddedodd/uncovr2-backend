@@ -43,7 +43,9 @@ new or restored environment.
 3. Run `php artisan queue:restart` so workers load the new release safely.
 4. Confirm exactly one scheduler and the intended worker pools are running.
 5. Run health, authentication, publishing, media and webhook smoke tests.
-6. Confirm Resend delivery status and inspect queue/error metrics.
+6. Confirm label and artist onboarding routes are registered and that the
+   `artist_invitations` migration is present before enabling portal P3 flows.
+7. Confirm Resend delivery status and inspect queue/error metrics.
 
 ## Rollback
 

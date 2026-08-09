@@ -141,12 +141,17 @@ is maintained in the portal repository.
 - [x] `B3.12` Add a complete authorization matrix as automated feature tests.
 - [x] `B3.13` Test invitation email recipients, content, authorization, expiry,
   resend behavior and replay protection without making external mail requests.
+- [x] `B3.14` Add transactional label and artist onboarding commands with first-
+  administrator invitations, explicit-only artist creator roles and rollback
+  coverage for failed invitation creation.
 
 ### B3 gate
 
 - [x] Superadmin can see and manage the whole platform.
 - [x] Label Admin can manage only its label, artists and team.
 - [x] Artist Admin can manage only its artist and team.
+- [x] Superadmin can onboard a label without receiving label membership, and a
+  Label Admin can onboard a related artist without receiving an implicit artist role.
 - [x] Label User and Artist User can change only owned or assigned resources.
 - [x] Removing membership immediately removes its access.
 
@@ -202,8 +207,10 @@ is maintained in the portal repository.
 
 ## Backend-to-portal gate
 
-- [x] Superadmin can create or approve a label and inspect its hierarchy through the API.
-- [x] Label Admin can manage team members and create an artist.
+- [x] Superadmin can atomically create a label, invite its first Label Admin and
+  inspect the hierarchy without receiving ordinary label membership.
+- [x] Label Admin can atomically create a related artist, invite its first
+  Artist Admin and manage team members without receiving an implicit artist role.
 - [x] Artist Admin can manage its team and create a release.
 - [x] A release can progress from draft to published.
 - [x] Unauthorized and cross-tenant API operations are rejected and tested.

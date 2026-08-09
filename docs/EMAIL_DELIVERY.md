@@ -41,11 +41,13 @@ during local diagnosis, run:
 php artisan queue:work database --queue=emails --tries=3 --timeout=120
 ```
 
-Mail is queued only after its database transaction commits. Retry delays are
+Mail, including label and artist invitations, is queued only after its database
+transaction commits. Retry delays are
 60 seconds, 5 minutes, and 15 minutes. Exhausted jobs are visible in Laravel's
 `failed_jobs` table. Every verification attempt has a deterministic Resend
-idempotency key, so a retry of the same queued notification cannot create a
-duplicate provider send.
+idempotency key, and every invitation send uses its public invitation ID and
+send count, so a retry of the same queued notification cannot create a duplicate
+provider send while an intentional resend remains a distinct message.
 
 ## Verified Resend domain
 
@@ -145,6 +147,7 @@ Run the automated email and registration coverage with:
 
 ```bash
 php artisan test tests/Feature/Auth/RegistrationTest.php tests/Feature/Auth/EmailVerificationTest.php
+php artisan test tests/Feature/Domain/OrganizationInvitationTest.php tests/Feature/Domain/OnboardingWorkflowTest.php
 ```
 
 The verification URL is signed, expires after 60 minutes by default, and

@@ -6,7 +6,8 @@ clients connect to queue tables directly.
 
 ## Queue layout
 
-- `emails` handles verification, password reset and organization invitations.
+- `emails` handles verification, password reset, organization invitations and
+  artist invitations.
 - `publishing` handles scheduled release publication.
 - `default` is reserved for general background work.
 
