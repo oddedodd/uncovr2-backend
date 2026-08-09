@@ -67,6 +67,9 @@ The acting Label Admin receives no artist membership by default. If the product
 flow deliberately needs one, `creator_role` must explicitly be `artist_admin`
 or `artist_user`.
 
+The legacy standalone `POST /api/v1/artists` contract follows the same rule:
+the creator receives no membership unless `creator_role` is explicitly supplied.
+
 The invited person signs in or registers with the exact invited email address,
 then the portal's `/artist-invitations/accept` page submits:
 

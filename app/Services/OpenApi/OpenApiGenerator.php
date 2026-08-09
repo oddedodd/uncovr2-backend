@@ -198,6 +198,20 @@ class OpenApiGenerator
             return $this->invitationSchema(['artist_admin', 'artist_user']);
         }
 
+        if (str_ends_with($name, 'artists.store')) {
+            return [
+                'type' => 'object',
+                'additionalProperties' => false,
+                'required' => ['name'],
+                'properties' => [
+                    'name' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 150],
+                    'biography' => ['type' => ['string', 'null'], 'maxLength' => 10000],
+                    'website_url' => ['type' => ['string', 'null'], 'format' => 'uri'],
+                    'creator_role' => ['type' => ['string', 'null'], 'enum' => ['artist_admin', 'artist_user', null]],
+                ],
+            ];
+        }
+
         if (str_ends_with($name, 'artist-invitations.accept')) {
             return [
                 'type' => 'object',

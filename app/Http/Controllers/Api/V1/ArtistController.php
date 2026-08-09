@@ -62,7 +62,10 @@ final class ArtistController extends Controller
 
     public function store(StoreArtistRequest $request, ArtistService $service): JsonResponse
     {
-        $artist = $service->create($request->user(), $request->validated());
+        $validated = $request->validated();
+        $creatorRole = $validated['creator_role'] ?? null;
+        unset($validated['creator_role']);
+        $artist = $service->create($request->user(), $validated, $creatorRole);
 
         return ApiResponse::success((new ArtistResource($artist))->resolve(), 201);
     }

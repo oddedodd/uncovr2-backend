@@ -299,7 +299,43 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/JsonObject"
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 150
+                                    },
+                                    "biography": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 10000
+                                    },
+                                    "website_url": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "uri"
+                                    },
+                                    "creator_role": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "enum": [
+                                            "artist_admin",
+                                            "artist_user",
+                                            null
+                                        ]
+                                    }
+                                }
                             }
                         }
                     }
@@ -2576,7 +2612,43 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/JsonObject"
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 150
+                                    },
+                                    "biography": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 10000
+                                    },
+                                    "website_url": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "uri"
+                                    },
+                                    "creator_role": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "enum": [
+                                            "artist_admin",
+                                            "artist_user",
+                                            null
+                                        ]
+                                    }
+                                }
                             }
                         }
                     }
@@ -4257,7 +4329,43 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/JsonObject"
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 150
+                                    },
+                                    "biography": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 10000
+                                    },
+                                    "website_url": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "uri"
+                                    },
+                                    "creator_role": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "enum": [
+                                            "artist_admin",
+                                            "artist_user",
+                                            null
+                                        ]
+                                    }
+                                }
                             }
                         }
                     }
@@ -6067,7 +6175,43 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/JsonObject"
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 150
+                                    },
+                                    "biography": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 10000
+                                    },
+                                    "website_url": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "uri"
+                                    },
+                                    "creator_role": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "enum": [
+                                            "artist_admin",
+                                            "artist_user",
+                                            null
+                                        ]
+                                    }
+                                }
                             }
                         }
                     }

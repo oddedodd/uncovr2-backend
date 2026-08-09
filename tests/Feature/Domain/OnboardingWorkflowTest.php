@@ -304,6 +304,25 @@ class OnboardingWorkflowTest extends TestCase
         $this->postApi("/artist-invitations/{$invitation->public_id}/resend")->assertForbidden();
     }
 
+    public function test_standalone_artist_creation_also_requires_an_explicit_creator_role(): void
+    {
+        $creator = $this->user('standalone-creator@example.com');
+        Sanctum::actingAs($creator, ['portal:access']);
+
+        $this->postApi('/artists', ['name' => 'No Implicit Role'])->assertCreated();
+        $this->assertDatabaseCount('artist_memberships', 0);
+
+        $this->postApi('/artists', [
+            'name' => 'Explicit Creator Role',
+            'creator_role' => 'artist_admin',
+        ])->assertCreated();
+        $this->assertDatabaseHas('artist_memberships', [
+            'user_id' => $creator->id,
+            'role' => 'artist_admin',
+            'status' => 'active',
+        ]);
+    }
+
     private function label(): array
     {
         $admin = $this->user('label-admin@example.com');

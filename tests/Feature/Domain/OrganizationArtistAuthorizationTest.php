@@ -30,6 +30,7 @@ class OrganizationArtistAuthorizationTest extends TestCase
             'name' => 'Ada Artist',
             'biography' => null,
             'website_url' => null,
+            'creator_role' => 'artist_admin',
         ])->assertCreated()->json('data');
 
         $this->assertMatchesRegularExpression('/^[0-9a-z]{26}$/', $organization['id']);
