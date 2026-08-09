@@ -410,7 +410,74 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful response"
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": true,
+                                            "required": [
+                                                "profile"
+                                            ],
+                                            "properties": {
+                                                "profile": {
+                                                    "type": "object",
+                                                    "additionalProperties": true,
+                                                    "required": [
+                                                        "logo_media_id",
+                                                        "image_media_id",
+                                                        "logo_media",
+                                                        "image_media"
+                                                    ],
+                                                    "properties": {
+                                                        "logo_media_id": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "pattern": "^[0-9A-Za-z]{26}$"
+                                                        },
+                                                        "image_media_id": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "pattern": "^[0-9A-Za-z]{26}$"
+                                                        },
+                                                        "logo_media": {
+                                                            "anyOf": [
+                                                                {
+                                                                    "$ref": "#/components/schemas/MediaReference"
+                                                                },
+                                                                {
+                                                                    "type": "null"
+                                                                }
+                                                            ]
+                                                        },
+                                                        "image_media": {
+                                                            "anyOf": [
+                                                                {
+                                                                    "$ref": "#/components/schemas/MediaReference"
+                                                                },
+                                                                {
+                                                                    "type": "null"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -445,7 +512,182 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/JsonObject"
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 150
+                                    },
+                                    "biography": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 10000
+                                    },
+                                    "website_url": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "uri"
+                                    },
+                                    "logo_media_id": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "pattern": "^[0-9A-Za-z]{26}$"
+                                    },
+                                    "image_media_id": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "pattern": "^[0-9A-Za-z]{26}$"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/artists/{artist}/image": {
+            "post": {
+                "operationId": "api_v1_artists_image_store",
+                "tags": [
+                    "Artists"
+                ],
+                "summary": "Artists Image Store",
+                "parameters": [
+                    {
+                        "name": "artist",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": true,
+                                            "required": [
+                                                "profile"
+                                            ],
+                                            "properties": {
+                                                "profile": {
+                                                    "type": "object",
+                                                    "additionalProperties": true,
+                                                    "required": [
+                                                        "logo_media_id",
+                                                        "image_media_id",
+                                                        "logo_media",
+                                                        "image_media"
+                                                    ],
+                                                    "properties": {
+                                                        "logo_media_id": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "pattern": "^[0-9A-Za-z]{26}$"
+                                                        },
+                                                        "image_media_id": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "pattern": "^[0-9A-Za-z]{26}$"
+                                                        },
+                                                        "logo_media": {
+                                                            "anyOf": [
+                                                                {
+                                                                    "$ref": "#/components/schemas/MediaReference"
+                                                                },
+                                                                {
+                                                                    "type": "null"
+                                                                }
+                                                            ]
+                                                        },
+                                                        "image_media": {
+                                                            "anyOf": [
+                                                                {
+                                                                    "$ref": "#/components/schemas/MediaReference"
+                                                                },
+                                                                {
+                                                                    "type": "null"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "image"
+                                ],
+                                "properties": {
+                                    "image": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "description": "JPEG, PNG, WebP or AVIF image within configured media limits."
+                                    }
+                                }
                             }
                         }
                     }
@@ -581,6 +823,145 @@
                         "cookieAuth": []
                     }
                 ]
+            }
+        },
+        "/api/v1/artists/{artist}/logo": {
+            "post": {
+                "operationId": "api_v1_artists_logo_store",
+                "tags": [
+                    "Artists"
+                ],
+                "summary": "Artists Logo Store",
+                "parameters": [
+                    {
+                        "name": "artist",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": true,
+                                            "required": [
+                                                "profile"
+                                            ],
+                                            "properties": {
+                                                "profile": {
+                                                    "type": "object",
+                                                    "additionalProperties": true,
+                                                    "required": [
+                                                        "logo_media_id",
+                                                        "image_media_id",
+                                                        "logo_media",
+                                                        "image_media"
+                                                    ],
+                                                    "properties": {
+                                                        "logo_media_id": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "pattern": "^[0-9A-Za-z]{26}$"
+                                                        },
+                                                        "image_media_id": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "pattern": "^[0-9A-Za-z]{26}$"
+                                                        },
+                                                        "logo_media": {
+                                                            "anyOf": [
+                                                                {
+                                                                    "$ref": "#/components/schemas/MediaReference"
+                                                                },
+                                                                {
+                                                                    "type": "null"
+                                                                }
+                                                            ]
+                                                        },
+                                                        "image_media": {
+                                                            "anyOf": [
+                                                                {
+                                                                    "$ref": "#/components/schemas/MediaReference"
+                                                                },
+                                                                {
+                                                                    "type": "null"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "image"
+                                ],
+                                "properties": {
+                                    "image": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "description": "JPEG, PNG, WebP or AVIF image within configured media limits."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/v1/artists/{artist}/members": {
@@ -2223,7 +2604,46 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful response"
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": true,
+                                            "required": [
+                                                "cover_media_id",
+                                                "cover_media"
+                                            ],
+                                            "properties": {
+                                                "cover_media_id": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "pattern": "^[0-9A-Za-z]{26}$"
+                                                },
+                                                "cover_media": {
+                                                    "anyOf": [
+                                                        {
+                                                            "$ref": "#/components/schemas/MediaReference"
+                                                        },
+                                                        {
+                                                            "type": "null"
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -2258,7 +2678,80 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/JsonObject"
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "owner_type",
+                                    "owner_id",
+                                    "primary_artist_id",
+                                    "type",
+                                    "title"
+                                ],
+                                "properties": {
+                                    "owner_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "organization",
+                                            "artist"
+                                        ]
+                                    },
+                                    "owner_id": {
+                                        "type": "string",
+                                        "pattern": "^[0-9A-Za-z]{26}$"
+                                    },
+                                    "primary_artist_id": {
+                                        "type": "string",
+                                        "pattern": "^[0-9A-Za-z]{26}$"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "album",
+                                            "ep",
+                                            "single"
+                                        ]
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 200
+                                    },
+                                    "subtitle": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 200
+                                    },
+                                    "description": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 10000
+                                    },
+                                    "release_date": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date"
+                                    },
+                                    "upc": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "pattern": "^[0-9]{12,14}$"
+                                    },
+                                    "cover_media_id": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "pattern": "^[0-9A-Za-z]{26}$"
+                                    }
+                                }
                             }
                         }
                     }
@@ -3384,6 +3877,48 @@
                 ]
             }
         },
+        "/api/v1/me/workspaces": {
+            "get": {
+                "operationId": "api_v1_me_workspaces_index",
+                "tags": [
+                    "Me"
+                ],
+                "summary": "Me Workspaces Index",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/media": {
             "post": {
                 "operationId": "api_v1_media_store",
@@ -3430,6 +3965,119 @@
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/JsonObject"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/media/downloads": {
+            "post": {
+                "operationId": "api_v1_media_downloads_store",
+                "tags": [
+                    "Media"
+                ],
+                "summary": "Media Downloads Store",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": false,
+                                            "required": [
+                                                "expires_in",
+                                                "items"
+                                            ],
+                                            "properties": {
+                                                "expires_in": {
+                                                    "type": "integer"
+                                                },
+                                                "items": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "additionalProperties": false,
+                                                        "required": [
+                                                            "media_id",
+                                                            "url"
+                                                        ],
+                                                        "properties": {
+                                                            "media_id": {
+                                                                "type": "string"
+                                                            },
+                                                            "url": {
+                                                                "type": "string",
+                                                                "format": "uri"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "media_ids"
+                                ],
+                                "properties": {
+                                    "media_ids": {
+                                        "type": "array",
+                                        "minItems": 1,
+                                        "maxItems": 100,
+                                        "uniqueItems": true,
+                                        "items": {
+                                            "type": "string",
+                                            "pattern": "^[0-9A-Za-z]{26}$"
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -4099,7 +4747,55 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful response"
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": true,
+                                            "required": [
+                                                "profile"
+                                            ],
+                                            "properties": {
+                                                "profile": {
+                                                    "type": "object",
+                                                    "additionalProperties": true,
+                                                    "required": [
+                                                        "logo_media_id",
+                                                        "logo_media"
+                                                    ],
+                                                    "properties": {
+                                                        "logo_media_id": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "pattern": "^[0-9A-Za-z]{26}$"
+                                                        },
+                                                        "logo_media": {
+                                                            "anyOf": [
+                                                                {
+                                                                    "$ref": "#/components/schemas/MediaReference"
+                                                                },
+                                                                {
+                                                                    "type": "null"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -4134,7 +4830,43 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/JsonObject"
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "minLength": 2,
+                                        "maxLength": 150
+                                    },
+                                    "legal_name": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 200
+                                    },
+                                    "description": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 5000
+                                    },
+                                    "website_url": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "uri"
+                                    },
+                                    "logo_media_id": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "pattern": "^[0-9A-Za-z]{26}$"
+                                    }
+                                }
                             }
                         }
                     }
@@ -4541,6 +5273,126 @@
                         "cookieAuth": []
                     }
                 ]
+            }
+        },
+        "/api/v1/organizations/{organization}/logo": {
+            "post": {
+                "operationId": "api_v1_organizations_logo_store",
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "Organizations Logo Store",
+                "parameters": [
+                    {
+                        "name": "organization",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": true,
+                                            "required": [
+                                                "profile"
+                                            ],
+                                            "properties": {
+                                                "profile": {
+                                                    "type": "object",
+                                                    "additionalProperties": true,
+                                                    "required": [
+                                                        "logo_media_id",
+                                                        "logo_media"
+                                                    ],
+                                                    "properties": {
+                                                        "logo_media_id": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "pattern": "^[0-9A-Za-z]{26}$"
+                                                        },
+                                                        "logo_media": {
+                                                            "anyOf": [
+                                                                {
+                                                                    "$ref": "#/components/schemas/MediaReference"
+                                                                },
+                                                                {
+                                                                    "type": "null"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "image"
+                                ],
+                                "properties": {
+                                    "image": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "description": "JPEG, PNG, WebP or AVIF image within configured media limits."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/v1/organizations/{organization}/members": {
@@ -5747,7 +6599,46 @@
                 "parameters": [],
                 "responses": {
                     "201": {
-                        "description": "Successful response"
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": true,
+                                            "required": [
+                                                "cover_media_id",
+                                                "cover_media"
+                                            ],
+                                            "properties": {
+                                                "cover_media_id": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "pattern": "^[0-9A-Za-z]{26}$"
+                                                },
+                                                "cover_media": {
+                                                    "anyOf": [
+                                                        {
+                                                            "$ref": "#/components/schemas/MediaReference"
+                                                        },
+                                                        {
+                                                            "type": "null"
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -5782,7 +6673,80 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/JsonObject"
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "owner_type",
+                                    "owner_id",
+                                    "primary_artist_id",
+                                    "type",
+                                    "title"
+                                ],
+                                "properties": {
+                                    "owner_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "organization",
+                                            "artist"
+                                        ]
+                                    },
+                                    "owner_id": {
+                                        "type": "string",
+                                        "pattern": "^[0-9A-Za-z]{26}$"
+                                    },
+                                    "primary_artist_id": {
+                                        "type": "string",
+                                        "pattern": "^[0-9A-Za-z]{26}$"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "album",
+                                            "ep",
+                                            "single"
+                                        ]
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 200
+                                    },
+                                    "subtitle": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 200
+                                    },
+                                    "description": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 10000
+                                    },
+                                    "release_date": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date"
+                                    },
+                                    "upc": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "pattern": "^[0-9]{12,14}$"
+                                    },
+                                    "cover_media_id": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "pattern": "^[0-9A-Za-z]{26}$"
+                                    }
+                                }
                             }
                         }
                     }
@@ -5906,7 +6870,46 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful response"
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": true,
+                                            "required": [
+                                                "cover_media_id",
+                                                "cover_media"
+                                            ],
+                                            "properties": {
+                                                "cover_media_id": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "pattern": "^[0-9A-Za-z]{26}$"
+                                                },
+                                                "cover_media": {
+                                                    "anyOf": [
+                                                        {
+                                                            "$ref": "#/components/schemas/MediaReference"
+                                                        },
+                                                        {
+                                                            "type": "null"
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -5941,7 +6944,58 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/JsonObject"
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "album",
+                                            "ep",
+                                            "single"
+                                        ]
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 200
+                                    },
+                                    "subtitle": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 200
+                                    },
+                                    "description": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 10000
+                                    },
+                                    "release_date": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date"
+                                    },
+                                    "upc": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "pattern": "^[0-9]{12,14}$"
+                                    },
+                                    "cover_media_id": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "pattern": "^[0-9A-Za-z]{26}$"
+                                    }
+                                }
                             }
                         }
                     }
@@ -7946,6 +9000,43 @@
             "JsonObject": {
                 "type": "object",
                 "additionalProperties": true
+            },
+            "MediaReference": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "id",
+                    "status",
+                    "mime_type",
+                    "width",
+                    "height"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "ready"
+                        ]
+                    },
+                    "mime_type": {
+                        "type": "string"
+                    },
+                    "width": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "height": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    }
+                }
             },
             "Error": {
                 "type": "object",

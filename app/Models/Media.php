@@ -33,6 +33,21 @@ class Media extends Model
         return $this->hasMany(Release::class, 'cover_media_id');
     }
 
+    public function organizationProfilesAsLogo(): HasMany
+    {
+        return $this->hasMany(OrganizationProfile::class, 'logo_media_id');
+    }
+
+    public function artistProfilesAsLogo(): HasMany
+    {
+        return $this->hasMany(ArtistProfile::class, 'logo_media_id');
+    }
+
+    public function artistProfilesAsImage(): HasMany
+    {
+        return $this->hasMany(ArtistProfile::class, 'image_media_id');
+    }
+
     public function uploads(): HasMany
     {
         return $this->hasMany(MediaUpload::class);

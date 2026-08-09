@@ -11,6 +11,7 @@ final class UpdateOrganizationRequest extends StrictFormRequest
             'legal_name' => ['sometimes', 'nullable', 'string', 'max:200'],
             'description' => ['sometimes', 'nullable', 'string', 'max:5000'],
             'website_url' => ['sometimes', 'nullable', 'url:http,https', 'max:2048'],
+            'logo_media_id' => ['sometimes', 'nullable', 'ulid'],
         ];
     }
 }

@@ -178,10 +178,15 @@ Authenticated portal sessions and mobile bearer tokens use the same endpoints:
 - `POST /api/v1/auth/logout-all` revokes every portal and mobile session owned
   by the account.
 - `GET /api/v1/me` returns the account's public ID, verified email, minimal
-  profile, superadmin flag and its organization/artist workspaces with current
-  role and membership status. This is the portal's role-aware navigation
-  contract; Laravel Policies still authorize every operation. `PATCH /api/v1/me`
-  currently changes only `display_name` and returns the same context.
+  profile and superadmin flag. Keep this response small enough to use directly
+  after login.
+- `GET /api/v1/me/workspaces` returns the organization/artist workspace list
+  with current role and membership status. This is the portal's role-aware
+  navigation context, not an authorization contract; Laravel Policies still
+  authorize every operation. The backend may briefly cache this response to
+  avoid repeated bootstrap graph loads.
+- `PATCH /api/v1/me` currently changes only `display_name` and returns the
+  minimal account context.
 - `GET /api/v1/me/sessions` lists active sessions and identifies the current
   one; `DELETE /api/v1/me/sessions/{public_id}` revokes an owned session.
 

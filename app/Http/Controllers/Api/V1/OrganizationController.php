@@ -6,6 +6,7 @@ use App\Enums\MembershipStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\ProtectedScopeIndexRequest;
 use App\Http\Requests\Api\V1\StoreOrganizationRequest;
+use App\Http\Requests\Api\V1\StoreProfileImageRequest;
 use App\Http\Requests\Api\V1\UpdateOrganizationRequest;
 use App\Http\Requests\Api\V1\UpdateScopeStatusRequest;
 use App\Http\Resources\OrganizationResource;
@@ -13,9 +14,12 @@ use App\Http\Responses\ApiResponse;
 use App\Models\Organization;
 use App\Services\Api\CursorPagination;
 use App\Services\Auth\SecurityAuditLogger;
+use App\Services\Media\MediaAttachmentValidator;
+use App\Services\Media\ProfileImageUploadService;
 use App\Services\Organizations\OrganizationService;
 use App\Services\PublicApi\PublicCatalogCache;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 final class OrganizationController extends Controller
@@ -23,7 +27,7 @@ final class OrganizationController extends Controller
     public function index(ProtectedScopeIndexRequest $request, CursorPagination $pagination): JsonResponse
     {
         $query = Organization::query()
-            ->with('profile')
+            ->with('profile.logoMedia')
             ->orderByDesc('public_id');
 
         if (! $request->user()->is_superadmin) {
@@ -66,16 +70,33 @@ final class OrganizationController extends Controller
     {
         Gate::authorize('view', $organization);
 
-        return ApiResponse::success((new OrganizationResource($organization->load('profile')))->resolve());
+        return ApiResponse::success((new OrganizationResource($organization->load('profile.logoMedia')))->resolve());
     }
 
-    public function update(UpdateOrganizationRequest $request, Organization $organization, PublicCatalogCache $cache): JsonResponse
+    public function update(UpdateOrganizationRequest $request, Organization $organization, MediaAttachmentValidator $mediaValidator, PublicCatalogCache $cache): JsonResponse
     {
         Gate::authorize('update', $organization);
-        $organization->profile()->update($request->validated());
+        $data = $request->validated();
+        DB::transaction(function () use ($organization, $mediaValidator, &$data): void {
+            $profile = $organization->profile()->lockForUpdate()->firstOrFail();
+            if (array_key_exists('logo_media_id', $data)) {
+                $media = $mediaValidator->resolveImage($data['logo_media_id'], $organization, 'logo_media_id');
+                $data['logo_media_id'] = $media?->getKey();
+            }
+            $profile->update($data);
+        });
         $cache->invalidate();
 
-        return ApiResponse::success((new OrganizationResource($organization->load('profile')))->resolve());
+        return ApiResponse::success((new OrganizationResource($organization->load('profile.logoMedia')))->resolve());
+    }
+
+    public function uploadLogo(StoreProfileImageRequest $request, Organization $organization, ProfileImageUploadService $uploads, PublicCatalogCache $cache): JsonResponse
+    {
+        Gate::authorize('update', $organization);
+        $uploads->uploadOrganizationLogo($organization, $request->file('image'), $request->user());
+        $cache->invalidate();
+
+        return ApiResponse::success((new OrganizationResource($organization->load('profile.logoMedia')))->resolve(), 201);
     }
 
     public function updateStatus(UpdateScopeStatusRequest $request, Organization $organization, SecurityAuditLogger $audit, PublicCatalogCache $cache): JsonResponse

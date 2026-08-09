@@ -4,12 +4,15 @@ namespace App\Services\Media;
 
 use App\Contracts\MediaStorage;
 use App\Data\StoredObject;
+use App\Support\RequestPerformanceMetrics;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
 final class SupabaseMediaStorage implements MediaStorage
 {
+    public function __construct(private readonly ?RequestPerformanceMetrics $metrics = null) {}
+
     public function provisionBuckets(): void
     {
         $mimeTypes = collect(config('media.limits'))->flatMap(fn (array $limit): array => $limit['mime_types'])->unique()->values()->all();
@@ -25,7 +28,7 @@ final class SupabaseMediaStorage implements MediaStorage
 
     public function createSignedUpload(string $bucket, string $path): array
     {
-        $response = $this->request()->post($this->endpoint("object/upload/sign/{$this->encode($bucket, $path)}"), []);
+        $response = $this->timed(fn () => $this->request()->post($this->endpoint("object/upload/sign/{$this->encode($bucket, $path)}"), []));
         $this->ensureSuccessful($response->successful(), $response->body());
         $relativeUrl = $response->json('url');
         if (! is_string($relativeUrl) || ! str_contains($relativeUrl, 'token=')) {
@@ -40,7 +43,7 @@ final class SupabaseMediaStorage implements MediaStorage
     public function inspect(string $bucket, string $path, bool $includeBody = false): StoredObject
     {
         $encoded = $this->encode($bucket, $path);
-        $response = $this->request()->get($this->endpoint("object/info/{$encoded}"));
+        $response = $this->timed(fn () => $this->request()->get($this->endpoint("object/info/{$encoded}")));
         $this->ensureSuccessful($response->successful(), $response->body());
         $metadata = $response->json('metadata') ?? [];
         $mime = $response->json('content_type') ?? $response->json('contentType') ?? $metadata['mimetype'] ?? $metadata['contentType'] ?? null;
@@ -50,7 +53,7 @@ final class SupabaseMediaStorage implements MediaStorage
         }
         $body = null;
         if ($includeBody) {
-            $download = $this->request()->get($this->endpoint("object/{$encoded}"));
+            $download = $this->timed(fn () => $this->request()->get($this->endpoint("object/{$encoded}")));
             $this->ensureSuccessful($download->successful(), $download->body());
             $body = $download->body();
         }
@@ -60,7 +63,7 @@ final class SupabaseMediaStorage implements MediaStorage
 
     public function createSignedDownload(string $bucket, string $path, int $expiresIn): string
     {
-        $response = $this->request()->post($this->endpoint("object/sign/{$this->encode($bucket, $path)}"), ['expiresIn' => $expiresIn]);
+        $response = $this->timed(fn () => $this->request()->post($this->endpoint("object/sign/{$this->encode($bucket, $path)}"), ['expiresIn' => $expiresIn]));
         $this->ensureSuccessful($response->successful(), $response->body());
         $signed = $response->json('signedURL') ?? $response->json('signedUrl');
         if (! is_string($signed)) {
@@ -72,18 +75,26 @@ final class SupabaseMediaStorage implements MediaStorage
 
     public function copy(string $sourceBucket, string $sourcePath, string $destinationBucket, string $destinationPath): void
     {
-        $response = $this->request()->post($this->endpoint('object/copy'), [
+        $response = $this->timed(fn () => $this->request()->post($this->endpoint('object/copy'), [
             'bucketId' => $sourceBucket,
             'sourceKey' => $sourcePath,
             'destinationBucket' => $destinationBucket,
             'destinationKey' => $destinationPath,
-        ]);
+        ]));
         $this->ensureSuccessful($response->successful(), $response->body());
     }
 
     public function delete(string $bucket, string $path): void
     {
-        $response = $this->request()->delete($this->endpoint('object/'.rawurlencode($bucket)), ['prefixes' => [$path]]);
+        $response = $this->timed(fn () => $this->request()->delete($this->endpoint('object/'.rawurlencode($bucket)), ['prefixes' => [$path]]));
+        $this->ensureSuccessful($response->successful(), $response->body());
+    }
+
+    public function upload(string $bucket, string $path, string $body, string $mimeType): void
+    {
+        $response = $this->timed(fn () => $this->request()
+            ->withBody($body, $mimeType)
+            ->put($this->endpoint("object/{$this->encode($bucket, $path)}")));
         $this->ensureSuccessful($response->successful(), $response->body());
     }
 
@@ -131,6 +142,18 @@ final class SupabaseMediaStorage implements MediaStorage
     {
         if (! $successful) {
             throw new RuntimeException('Supabase Storage request failed: '.str($body)->limit(300));
+        }
+    }
+
+    private function timed(callable $request): mixed
+    {
+        $startedAt = hrtime(true);
+
+        try {
+            return $request();
+        } finally {
+            ($this->metrics ?? app(RequestPerformanceMetrics::class))
+                ->recordStorageCall((hrtime(true) - $startedAt) / 1_000_000);
         }
     }
 }

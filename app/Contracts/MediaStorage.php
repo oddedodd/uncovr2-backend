@@ -15,6 +15,8 @@ interface MediaStorage
 
     public function createSignedDownload(string $bucket, string $path, int $expiresIn): string;
 
+    public function upload(string $bucket, string $path, string $body, string $mimeType): void;
+
     public function copy(string $sourceBucket, string $sourcePath, string $destinationBucket, string $destinationPath): void;
 
     public function delete(string $bucket, string $path): void;

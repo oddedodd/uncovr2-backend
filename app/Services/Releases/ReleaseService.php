@@ -5,7 +5,6 @@ namespace App\Services\Releases;
 use App\Models\Artist;
 use App\Models\ContentBlock;
 use App\Models\Credit;
-use App\Models\Media;
 use App\Models\Organization;
 use App\Models\Page;
 use App\Models\Release;
@@ -13,6 +12,7 @@ use App\Models\StreamingLink;
 use App\Models\Track;
 use App\Models\User;
 use App\Services\Authorization\ScopeAccess;
+use App\Services\Media\MediaAttachmentValidator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -22,6 +22,7 @@ final class ReleaseService
         private readonly ReleaseScopeResolver $scopeResolver,
         private readonly ScopeAccess $access,
         private readonly ReleaseActivityLogger $activity,
+        private readonly MediaAttachmentValidator $mediaValidator,
     ) {}
 
     public function create(User $actor, array $data): Release
@@ -38,15 +39,8 @@ final class ReleaseService
             throw ValidationException::withMessages(['primary_artist_id' => ['An artist-owned release must use that artist as primary artist.']]);
         }
 
-        $cover = null;
-        if ($data['cover_media_id'] ?? null) {
-            $cover = Media::query()->where('public_id', $data['cover_media_id'])->first();
-            if (! $cover) {
-                throw ValidationException::withMessages(['cover_media_id' => ['The selected media is invalid.']]);
-            }
-        }
-
-        return DB::transaction(function () use ($actor, $data, $owner, $primaryArtist, $cover): Release {
+        return DB::transaction(function () use ($actor, $data, $owner, $primaryArtist): Release {
+            $cover = $this->mediaValidator->resolveImage($data['cover_media_id'] ?? null, $owner, 'cover_media_id');
             $release = Release::query()->create([
                 'organization_id' => $owner instanceof Organization ? $owner->getKey() : null,
                 'artist_id' => $owner instanceof Artist ? $owner->getKey() : null,
@@ -56,9 +50,6 @@ final class ReleaseService
                 'cover_media_id' => $cover?->getKey(),
                 'created_by_user_id' => $actor->getKey(), 'updated_by_user_id' => $actor->getKey(),
             ]);
-            if ($cover) {
-                $this->scopeResolver->assertSameOwner($release, $cover, 'cover_media_id');
-            }
             $release->artistLinks()->create(['artist_id' => $primaryArtist->getKey(), 'is_primary' => true, 'position' => 1]);
             $release->editorAssignments()->create(['user_id' => $actor->getKey(), 'granted_by_user_id' => $actor->getKey()]);
             $this->activity->record($release, $actor, 'release.created', $release);
@@ -69,25 +60,22 @@ final class ReleaseService
 
     public function update(Release $release, User $actor, array $data): Release
     {
-        $auditData = $data;
-        if (isset($data['cover_media_id'])) {
-            $media = $data['cover_media_id'] ? Media::query()->where('public_id', $data['cover_media_id'])->first() : null;
-            if ($data['cover_media_id'] && ! $media) {
-                throw ValidationException::withMessages(['cover_media_id' => ['The selected media is invalid.']]);
+        return DB::transaction(function () use ($release, $actor, $data): Release {
+            $locked = Release::query()->lockForUpdate()->findOrFail($release->getKey());
+            $auditData = $data;
+            if (array_key_exists('cover_media_id', $data)) {
+                $media = $this->mediaValidator->resolveImage($data['cover_media_id'], $locked, 'cover_media_id');
+                $data['cover_media_id'] = $media?->getKey();
             }
-            if ($media) {
-                $this->scopeResolver->assertSameOwner($release, $media, 'cover_media_id');
+            $locked->update([...$data, 'updated_by_user_id' => $actor->getKey()]);
+            $changedKeys = array_keys($locked->getChanges());
+            $changes = collect($auditData)->only($changedKeys)->all();
+            if ($changes) {
+                $this->activity->record($locked, $actor, 'release.updated', $locked, $changes);
             }
-            $data['cover_media_id'] = $media?->getKey();
-        }
-        $release->update([...$data, 'updated_by_user_id' => $actor->getKey()]);
-        $changedKeys = array_keys($release->getChanges());
-        $changes = collect($auditData)->only($changedKeys)->all();
-        if ($changes) {
-            $this->activity->record($release, $actor, 'release.updated', $release, $changes);
-        }
 
-        return $release;
+            return $locked;
+        });
     }
 
     public function delete(Release $release, User $actor): void

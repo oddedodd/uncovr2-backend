@@ -46,6 +46,18 @@ class OpenApiGenerator
                 ],
                 'schemas' => [
                     'JsonObject' => ['type' => 'object', 'additionalProperties' => true],
+                    'MediaReference' => [
+                        'type' => 'object',
+                        'additionalProperties' => false,
+                        'required' => ['id', 'status', 'mime_type', 'width', 'height'],
+                        'properties' => [
+                            'id' => ['type' => 'string'],
+                            'status' => ['type' => 'string', 'enum' => ['ready']],
+                            'mime_type' => ['type' => 'string'],
+                            'width' => ['type' => ['integer', 'null']],
+                            'height' => ['type' => ['integer', 'null']],
+                        ],
+                    ],
                     'Error' => [
                         'type' => 'object',
                         'required' => ['message'],
@@ -80,7 +92,7 @@ class OpenApiGenerator
                 ], $matches[1]),
                 ...$this->queryParameters($name, $method),
             ],
-            'responses' => $this->responses($method, $authenticated),
+            'responses' => $this->responses($name, $method, $authenticated),
         ];
 
         if ($authenticated) {
@@ -88,6 +100,15 @@ class OpenApiGenerator
         }
 
         if (in_array($method, ['post', 'put', 'patch'], true)) {
+            if ($this->isProfileImageUpload($name)) {
+                $operation['requestBody'] = [
+                    'required' => true,
+                    'content' => ['multipart/form-data' => ['schema' => $this->profileImageUploadSchema()]],
+                ];
+
+                return $operation;
+            }
+
             $operation['requestBody'] = [
                 'required' => true,
                 'content' => ['application/json' => ['schema' => $this->requestSchema($name)]],
@@ -147,6 +168,59 @@ class OpenApiGenerator
     /** @return array<string, mixed> */
     private function requestSchema(string $name): array
     {
+        if (str_ends_with($name, 'organizations.update')) {
+            return [
+                'type' => 'object',
+                'additionalProperties' => false,
+                'properties' => [
+                    'name' => ['type' => 'string', 'minLength' => 2, 'maxLength' => 150],
+                    'legal_name' => ['type' => ['string', 'null'], 'maxLength' => 200],
+                    'description' => ['type' => ['string', 'null'], 'maxLength' => 5000],
+                    'website_url' => ['type' => ['string', 'null'], 'format' => 'uri'],
+                    'logo_media_id' => $this->nullableUlidSchema(),
+                ],
+            ];
+        }
+
+        if (str_ends_with($name, 'artists.update')) {
+            return [
+                'type' => 'object',
+                'additionalProperties' => false,
+                'properties' => [
+                    'name' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 150],
+                    'biography' => ['type' => ['string', 'null'], 'maxLength' => 10000],
+                    'website_url' => ['type' => ['string', 'null'], 'format' => 'uri'],
+                    'logo_media_id' => $this->nullableUlidSchema(),
+                    'image_media_id' => $this->nullableUlidSchema(),
+                ],
+            ];
+        }
+
+        if (str_ends_with($name, 'releases.store')) {
+            return $this->releaseSchema(false);
+        }
+
+        if (str_ends_with($name, 'releases.update')) {
+            return $this->releaseSchema(true);
+        }
+
+        if (str_ends_with($name, 'media.downloads.store')) {
+            return [
+                'type' => 'object',
+                'additionalProperties' => false,
+                'required' => ['media_ids'],
+                'properties' => [
+                    'media_ids' => [
+                        'type' => 'array',
+                        'minItems' => 1,
+                        'maxItems' => config('media.batch_download_limit'),
+                        'uniqueItems' => true,
+                        'items' => ['type' => 'string', 'pattern' => '^[0-9A-Za-z]{26}$'],
+                    ],
+                ],
+            ];
+        }
+
         if (str_ends_with($name, 'platform.organization-onboardings.store')) {
             return [
                 'type' => 'object',
@@ -245,6 +319,69 @@ class OpenApiGenerator
         return ['$ref' => '#/components/schemas/JsonObject'];
     }
 
+    private function isProfileImageUpload(string $name): bool
+    {
+        return str_ends_with($name, 'organizations.logo.store')
+            || str_ends_with($name, 'artists.logo.store')
+            || str_ends_with($name, 'artists.image.store');
+    }
+
+    /** @return array<string, mixed> */
+    private function profileImageUploadSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'additionalProperties' => false,
+            'required' => ['image'],
+            'properties' => [
+                'image' => [
+                    'type' => 'string',
+                    'format' => 'binary',
+                    'description' => 'JPEG, PNG, WebP or AVIF image within configured media limits.',
+                ],
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function nullableUlidSchema(): array
+    {
+        return [
+            'type' => ['string', 'null'],
+            'pattern' => '^[0-9A-Za-z]{26}$',
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function releaseSchema(bool $update): array
+    {
+        $properties = [
+            'type' => ['type' => 'string', 'enum' => ['album', 'ep', 'single']],
+            'title' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 200],
+            'subtitle' => ['type' => ['string', 'null'], 'maxLength' => 200],
+            'description' => ['type' => ['string', 'null'], 'maxLength' => 10000],
+            'release_date' => ['type' => ['string', 'null'], 'format' => 'date'],
+            'upc' => ['type' => ['string', 'null'], 'pattern' => '^[0-9]{12,14}$'],
+            'cover_media_id' => $this->nullableUlidSchema(),
+        ];
+
+        if (! $update) {
+            $properties = [
+                'owner_type' => ['type' => 'string', 'enum' => ['organization', 'artist']],
+                'owner_id' => ['type' => 'string', 'pattern' => '^[0-9A-Za-z]{26}$'],
+                'primary_artist_id' => ['type' => 'string', 'pattern' => '^[0-9A-Za-z]{26}$'],
+                ...$properties,
+            ];
+        }
+
+        return [
+            'type' => 'object',
+            'additionalProperties' => false,
+            ...($update ? [] : ['required' => ['owner_type', 'owner_id', 'primary_artist_id', 'type', 'title']]),
+            'properties' => $properties,
+        ];
+    }
+
     /** @return array<string, mixed> */
     private function administratorSchema(): array
     {
@@ -292,9 +429,11 @@ class OpenApiGenerator
     }
 
     /** @return array<string, mixed> */
-    private function responses(string $method, bool $authenticated): array
+    private function responses(string $name, string $method, bool $authenticated): array
     {
-        $success = $method === 'post' ? '201' : ($method === 'delete' ? '204' : '200');
+        $success = $method === 'post' && ! str_ends_with($name, 'media.downloads.store')
+            ? '201'
+            : ($method === 'delete' ? '204' : '200');
         $responses = [
             $success => ['description' => 'Successful response'],
             '422' => [
@@ -308,9 +447,103 @@ class OpenApiGenerator
             $responses = ['401' => ['description' => 'Unauthenticated'], '403' => ['description' => 'Forbidden']] + $responses;
         }
 
+        $responseSchema = $this->successResponseSchema($name);
+        if ($responseSchema !== null) {
+            $responses[$success]['content'] = ['application/json' => ['schema' => $responseSchema]];
+        }
+
         ksort($responses);
 
         return $responses;
+    }
+
+    /** @return array<string, mixed>|null */
+    private function successResponseSchema(string $name): ?array
+    {
+        $profileProperties = match (true) {
+            str_ends_with($name, 'organizations.update'), str_ends_with($name, 'organizations.logo.store') => [
+                'logo_media_id' => $this->nullableUlidSchema(),
+                'logo_media' => ['anyOf' => [['$ref' => '#/components/schemas/MediaReference'], ['type' => 'null']]],
+            ],
+            str_ends_with($name, 'artists.update'), str_ends_with($name, 'artists.logo.store'), str_ends_with($name, 'artists.image.store') => [
+                'logo_media_id' => $this->nullableUlidSchema(),
+                'image_media_id' => $this->nullableUlidSchema(),
+                'logo_media' => ['anyOf' => [['$ref' => '#/components/schemas/MediaReference'], ['type' => 'null']]],
+                'image_media' => ['anyOf' => [['$ref' => '#/components/schemas/MediaReference'], ['type' => 'null']]],
+            ],
+            default => null,
+        };
+
+        if ($profileProperties !== null) {
+            return [
+                'type' => 'object',
+                'required' => ['data'],
+                'properties' => [
+                    'data' => [
+                        'type' => 'object',
+                        'additionalProperties' => true,
+                        'required' => ['profile'],
+                        'properties' => [
+                            'profile' => [
+                                'type' => 'object',
+                                'additionalProperties' => true,
+                                'required' => array_keys($profileProperties),
+                                'properties' => $profileProperties,
+                            ],
+                        ],
+                    ],
+                ],
+            ];
+        }
+
+        if (str_ends_with($name, 'releases.store') || str_ends_with($name, 'releases.update')) {
+            return [
+                'type' => 'object',
+                'required' => ['data'],
+                'properties' => [
+                    'data' => [
+                        'type' => 'object',
+                        'additionalProperties' => true,
+                        'required' => ['cover_media_id', 'cover_media'],
+                        'properties' => [
+                            'cover_media_id' => $this->nullableUlidSchema(),
+                            'cover_media' => ['anyOf' => [['$ref' => '#/components/schemas/MediaReference'], ['type' => 'null']]],
+                        ],
+                    ],
+                ],
+            ];
+        }
+
+        if (str_ends_with($name, 'media.downloads.store')) {
+            return [
+                'type' => 'object',
+                'required' => ['data'],
+                'properties' => [
+                    'data' => [
+                        'type' => 'object',
+                        'additionalProperties' => false,
+                        'required' => ['expires_in', 'items'],
+                        'properties' => [
+                            'expires_in' => ['type' => 'integer'],
+                            'items' => [
+                                'type' => 'array',
+                                'items' => [
+                                    'type' => 'object',
+                                    'additionalProperties' => false,
+                                    'required' => ['media_id', 'url'],
+                                    'properties' => [
+                                        'media_id' => ['type' => 'string'],
+                                        'url' => ['type' => 'string', 'format' => 'uri'],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ];
+        }
+
+        return null;
     }
 
     private function tag(string $path): string

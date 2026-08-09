@@ -22,7 +22,7 @@ class MeTest extends TestCase
             ->assertJsonPath('data.email', 'artist@example.com')
             ->assertJsonPath('data.is_superadmin', false)
             ->assertJsonPath('data.profile.display_name', 'Old Name')
-            ->assertJsonPath('data.workspaces', [])
+            ->assertJsonMissingPath('data.workspaces')
             ->assertJsonMissingPath('data.password');
 
         $this->patchApi('/me', ['display_name' => '  Ada   Artist  '])
@@ -66,9 +66,8 @@ class MeTest extends TestCase
         ]);
         Sanctum::actingAs($user, ['mobile:access']);
 
-        $this->getApi('/me')
+        $this->getApi('/me/workspaces')
             ->assertOk()
-            ->assertJsonPath('data.is_superadmin', true)
             ->assertJsonPath('data.workspaces.0.type', 'artist')
             ->assertJsonPath('data.workspaces.0.name', 'Lumen')
             ->assertJsonPath('data.workspaces.0.role', 'artist_user')
@@ -97,6 +96,7 @@ class MeTest extends TestCase
     public function test_me_endpoints_require_authentication(): void
     {
         $this->getApi('/me')->assertUnauthorized();
+        $this->getApi('/me/workspaces')->assertUnauthorized();
         $this->patchApi('/me', ['display_name' => 'Ada'])->assertUnauthorized();
         $this->getApi('/me/sessions')->assertUnauthorized();
     }

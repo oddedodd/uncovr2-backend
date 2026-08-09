@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Contracts\MediaStorage;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\BatchMediaDownloadRequest;
 use App\Http\Responses\ApiResponse;
 use App\Models\Media;
 use App\Models\MediaUpload;
@@ -11,6 +12,7 @@ use App\Services\Media\MediaUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 final class MediaUploadController extends Controller
 {
@@ -43,5 +45,31 @@ final class MediaUploadController extends Controller
         $expiresIn = config('media.download_ttl_seconds');
 
         return ApiResponse::success(['url' => $storage->createSignedDownload($media->storage_disk, $media->storage_key, $expiresIn), 'expires_in' => $expiresIn]);
+    }
+
+    public function downloads(BatchMediaDownloadRequest $request, MediaStorage $storage): JsonResponse
+    {
+        $ids = $request->validated('media_ids');
+        $mediaById = Media::query()->whereIn('public_id', $ids)->get()->keyBy('public_id');
+
+        if ($mediaById->count() !== count($ids)) {
+            throw ValidationException::withMessages(['media_ids' => ['One or more media records do not exist.']]);
+        }
+
+        $expiresIn = config('media.download_ttl_seconds');
+        $items = collect($ids)->map(function (string $id) use ($mediaById, $storage, $expiresIn): array {
+            $media = $mediaById->get($id);
+            Gate::authorize('view', $media);
+            if ($media->status !== 'ready' || ! $media->storage_disk || ! $media->storage_key) {
+                throw ValidationException::withMessages(['media_ids' => ["Media {$id} is not ready for download."]]);
+            }
+
+            return [
+                'media_id' => $media->public_id,
+                'url' => $storage->createSignedDownload($media->storage_disk, $media->storage_key, $expiresIn),
+            ];
+        })->all();
+
+        return ApiResponse::success(['expires_in' => $expiresIn, 'items' => $items]);
     }
 }

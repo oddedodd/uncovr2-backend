@@ -30,7 +30,7 @@ final class LogoutController extends Controller
             $request->user()->currentAccessToken()->delete();
         }
 
-        $this->auditLogger->record(
+        $this->auditLogger->recordAfterResponse(
             'auth.logout',
             $request->user(),
             $request,

@@ -188,12 +188,19 @@ is maintained in the portal repository.
 - [x] `B5.8` Implement scheduled publication through queues.
 - [x] `B5.9` Produce immutable activity records for sensitive publication actions.
 - [x] `B5.10` Test upload authorization, approval transitions and publishing rules.
+- [x] `B5.11` Reuse verified Media records for label logos, artist logos,
+  artist images and release covers with ready/type/owner validation and safe
+  nullable profile references.
+- [x] `B5.12` Protect referenced profile and cover media from deletion and add
+  an authorized batch contract for short-lived private image URLs.
 
 ### B5 gate
 
 - [x] A draft can be previewed, submitted, approved and published.
 - [x] Only authorized roles can approve or publish.
 - [x] Published content remains separate from private drafts.
+- [x] Profile images and covers use the existing verified upload flow, expose no
+  Storage credentials or permanent private URL, and can be detached without deletion.
 
 ## B6 — Public content API and discovery foundation
 

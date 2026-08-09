@@ -21,8 +21,11 @@ use App\Policies\OrganizationMembershipPolicy;
 use App\Policies\OrganizationPolicy;
 use App\Policies\ReleasePolicy;
 use App\Services\Media\SupabaseMediaStorage;
+use App\Support\RequestPerformanceMetrics;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
@@ -37,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->scoped(RequestPerformanceMetrics::class);
         $this->app->bind(MediaStorage::class, SupabaseMediaStorage::class);
     }
 
@@ -56,12 +60,25 @@ class AppServiceProvider extends ServiceProvider
         Gate::before(fn ($user): ?bool => $user->is_superadmin ? true : null);
         $this->configureResendTransport();
         $this->configureRateLimiting();
+        $this->configurePerformanceMetrics();
         $this->validateEmailConfiguration();
         $this->validateQueueConfiguration();
 
         if ($this->app->isProduction()) {
             URL::forceScheme('https');
         }
+    }
+
+    private function configurePerformanceMetrics(): void
+    {
+        DB::listen(function (QueryExecuted $query): void {
+            if (! $this->app->bound(RequestPerformanceMetrics::class)) {
+                return;
+            }
+
+            $this->app->make(RequestPerformanceMetrics::class)
+                ->recordQuery($query->sql, $query->time);
+        });
     }
 
     private function configureResendTransport(): void

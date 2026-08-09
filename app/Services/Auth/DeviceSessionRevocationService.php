@@ -12,20 +12,28 @@ final class DeviceSessionRevocationService
 {
     public function revoke(DeviceSession $deviceSession, string $reason): bool
     {
-        return DB::transaction(function () use ($deviceSession, $reason): bool {
-            $session = DeviceSession::query()
-                ->whereKey($deviceSession->getKey())
-                ->lockForUpdate()
-                ->first();
+        $now = now()->startOfSecond();
+        $updated = DeviceSession::query()
+            ->whereKey($deviceSession->getKey())
+            ->whereNull('revoked_at')
+            ->update([
+                'revoked_at' => $now,
+                'revocation_reason' => $reason,
+                'updated_at' => $now,
+            ]);
 
-            if ($session === null || $session->revoked_at !== null) {
-                return false;
-            }
+        if ($updated === 0) {
+            return false;
+        }
 
-            $this->revokeLockedSession($session, $reason);
+        $deviceSession->forceFill([
+            'revoked_at' => $now,
+            'revocation_reason' => $reason,
+            'updated_at' => $now,
+        ]);
+        $this->revokeDependents($deviceSession, $now);
 
-            return true;
-        }, attempts: 3);
+        return true;
     }
 
     public function revokeAll(User $user, string $reason): int
@@ -62,16 +70,26 @@ final class DeviceSessionRevocationService
             'revocation_reason' => $reason,
         ])->save();
 
-        RefreshToken::query()
-            ->where('device_session_id', $session->getKey())
-            ->whereNull('revoked_at')
-            ->update(['revoked_at' => $now]);
+        $this->revokeDependents($session, $now);
+    }
 
-        DB::table('personal_access_tokens')
-            ->where('device_session_id', $session->getKey())
-            ->delete();
+    private function revokeDependents(DeviceSession $session, \DateTimeInterface $now): void
+    {
+        if ($session->client_type === 'mobile') {
+            RefreshToken::query()
+                ->where('device_session_id', $session->getKey())
+                ->whereNull('revoked_at')
+                ->update(['revoked_at' => $now]);
 
-        PushDevice::query()->where('device_session_id', $session->getKey())->whereNull('disabled_at')->update(['disabled_at' => $now]);
+            DB::table('personal_access_tokens')
+                ->where('device_session_id', $session->getKey())
+                ->delete();
+
+            PushDevice::query()
+                ->where('device_session_id', $session->getKey())
+                ->whereNull('disabled_at')
+                ->update(['disabled_at' => $now]);
+        }
 
         if ($session->web_session_id !== null && config('session.driver') === 'database') {
             DB::table(config('session.table'))

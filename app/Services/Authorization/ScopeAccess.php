@@ -11,6 +11,9 @@ use App\Models\User;
 
 final class ScopeAccess
 {
+    /** @var array<string, bool> */
+    private array $cache = [];
+
     public function canViewOrganization(User $user, Organization $organization): bool
     {
         return $this->hasOrganizationRole($user, $organization);
@@ -44,7 +47,9 @@ final class ScopeAccess
         Organization $organization,
         ?OrganizationRole $role = null,
     ): bool {
-        return $organization->status === 'active'
+        $key = implode(':', ['organization', $user->getKey(), $organization->getKey(), $role?->value ?? '*']);
+
+        return $this->cache[$key] ??= $organization->status === 'active'
             && $organization->memberships()
                 ->where('user_id', $user->getKey())
                 ->where('status', MembershipStatus::Active->value)
@@ -54,7 +59,9 @@ final class ScopeAccess
 
     private function hasArtistRole(User $user, Artist $artist, ?ArtistRole $role = null): bool
     {
-        return $artist->status === 'active'
+        $key = implode(':', ['artist', $user->getKey(), $artist->getKey(), $role?->value ?? '*']);
+
+        return $this->cache[$key] ??= $artist->status === 'active'
             && $artist->memberships()
                 ->where('user_id', $user->getKey())
                 ->where('status', MembershipStatus::Active->value)
@@ -67,11 +74,17 @@ final class ScopeAccess
         Artist $artist,
         ?OrganizationRole $role = null,
     ): bool {
-        if ($artist->status !== 'active') {
-            return false;
+        $key = implode(':', ['artist-related-organization', $user->getKey(), $artist->getKey(), $role?->value ?? '*']);
+
+        if (array_key_exists($key, $this->cache)) {
+            return $this->cache[$key];
         }
 
-        return $artist->organizationRelationships()
+        if ($artist->status !== 'active') {
+            return $this->cache[$key] = false;
+        }
+
+        return $this->cache[$key] = $artist->organizationRelationships()
             ->whereNull('ended_at')
             ->whereHas('organization', fn ($query) => $query
                 ->where('status', 'active')
