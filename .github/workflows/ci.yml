@@ -141,7 +141,7 @@ jobs:
       - name: Verify production configuration, demo seed and release gate
         env:
           APP_ENV: production
-          APP_KEY: base64:MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=
+          APP_KEY: base64:MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=
           APP_DEBUG: 'false'
           APP_URL: https://api.uncovr.test
           LOG_CHANNEL: stack

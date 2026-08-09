@@ -8,10 +8,19 @@ use Tests\TestCase;
 
 class DatabaseIsolationTest extends TestCase
 {
-    public function test_feature_tests_use_an_isolated_in_memory_database(): void
+    public function test_feature_tests_use_an_isolated_test_database(): void
     {
-        $this->assertSame('sqlite', config('database.default'));
-        $this->assertSame(':memory:', config('database.connections.sqlite.database'));
+        $connection = config('database.default');
+
+        $this->assertContains($connection, ['sqlite', 'pgsql']);
+        if ($connection === 'sqlite') {
+            $this->assertSame(':memory:', config('database.connections.sqlite.database'));
+        } else {
+            $this->assertSame('testing', app()->environment());
+            $this->assertSame('127.0.0.1', config('database.connections.pgsql.host'));
+            $this->assertSame('uncovr_test', config('database.connections.pgsql.database'));
+            $this->assertSame('laravel', config('database.connections.pgsql.search_path'));
+        }
         $this->assertContains(RefreshDatabase::class, class_uses_recursive(TestCase::class));
 
         $this->assertDatabaseCount('users', 0);
