@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\UserStatus;
 use App\Models\Concerns\HasPublicId;
 use App\Notifications\Auth\ResetPasswordNotification;
 use App\Notifications\Auth\VerifyEmailNotification;
@@ -45,6 +46,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function artistMemberships(): HasMany
     {
         return $this->hasMany(ArtistMembership::class);
+    }
+
+    public function releaseEditorAssignments(): HasMany
+    {
+        return $this->hasMany(ReleaseEditor::class);
     }
 
     public function artistFollows(): HasMany
@@ -134,6 +140,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'email_verification_version' => 'integer',
             'is_superadmin' => 'boolean',
+            'status' => UserStatus::class,
+            'suspended_at' => 'immutable_datetime',
             'deletion_requested_at' => 'immutable_datetime',
             'anonymized_at' => 'immutable_datetime',
             'password' => 'hashed',

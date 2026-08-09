@@ -8,7 +8,7 @@ in [API_CONVENTIONS.md](API_CONVENTIONS.md).
 
 | Endpoint | Search fields | Exact filters | Authorization |
 | --- | --- | --- | --- |
-| `GET /api/v1/users` | Public ID, email and display name | None | Superadmin only |
+| `GET /api/v1/users` | Public ID, email and display name | `status=active\|suspended` | Superadmin only |
 | `GET /api/v1/organizations` | Public ID, name and legal name | `status=active\|suspended` | Current organization scope; superadmin sees all |
 | `GET /api/v1/artists` | Public ID and artist name | `status=active\|suspended` | Current artist/label scope; superadmin sees all |
 | `GET /api/v1/releases` | Public ID, title, subtitle, UPC, artist and owner name | Release `status` and `type=album\|ep\|single` | Current owner scope; superadmin sees all |

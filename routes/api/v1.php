@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\OrganizationInvitationController;
 use App\Http\Controllers\Api\V1\OrganizationMembershipController;
 use App\Http\Controllers\Api\V1\PageController;
+use App\Http\Controllers\Api\V1\PlatformController;
 use App\Http\Controllers\Api\V1\PrivacyController;
 use App\Http\Controllers\Api\V1\PublicCatalogController;
 use App\Http\Controllers\Api\V1\PushDeviceController;
@@ -41,6 +42,7 @@ use App\Http\Controllers\Api\V1\ResendWebhookController;
 use App\Http\Controllers\Api\V1\StreamingLinkController;
 use App\Http\Controllers\Api\V1\TrackController;
 use App\Http\Controllers\Api\V1\UserController;
+use App\Http\Controllers\Api\V1\UserMembershipRoleController;
 use App\Http\Middleware\PreventPrivateResponseCaching;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Support\Facades\Route;
@@ -137,7 +139,13 @@ Route::middleware(['auth:sanctum', 'active-device-session', 'throttle:authentica
         Route::post('/me/privacy/deletion', [PrivacyController::class, 'requestDeletion'])->name('me.privacy.deletion.store');
         Route::delete('/me/privacy/deletion', [PrivacyController::class, 'cancelDeletion'])->name('me.privacy.deletion.destroy');
 
+        Route::get('/platform/overview', [PlatformController::class, 'overview'])->name('platform.overview');
+
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
+        Route::patch('/users/{user}/status', [UserController::class, 'updateStatus'])->name('users.status.update');
+        Route::patch('/users/{user}/organization-memberships/{membership}/role', [UserMembershipRoleController::class, 'organization'])->name('users.organization-memberships.role.update');
+        Route::patch('/users/{user}/artist-memberships/{membership}/role', [UserMembershipRoleController::class, 'artist'])->name('users.artist-memberships.role.update');
 
         Route::get('/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
         Route::post('/organizations', [OrganizationController::class, 'store'])->name('organizations.store');

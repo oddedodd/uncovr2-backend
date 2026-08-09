@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserStatus;
 use App\Services\Auth\CurrentDeviceSessionResolver;
 use App\Services\Auth\DeviceSessionRevocationService;
 use Closure;
@@ -18,6 +19,10 @@ final class EnsureActiveDeviceSession
 
     public function handle(Request $request, Closure $next): Response
     {
+        if ($request->user()?->status === UserStatus::Suspended) {
+            throw new AuthenticationException;
+        }
+
         $session = $this->sessionResolver->resolve($request);
 
         if ($session === null) {

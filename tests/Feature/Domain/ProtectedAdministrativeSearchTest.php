@@ -25,7 +25,12 @@ class ProtectedAdministrativeSearchTest extends TestCase
     {
         $superadmin = $this->user('root@example.com', 'Root Admin', true);
         $match = $this->user('artist@example.com', 'Northern Lights');
-        $this->user('other@example.com', 'Other User');
+        $suspended = $this->user('other@example.com', 'Other User');
+        $suspended->forceFill([
+            'status' => 'suspended',
+            'suspended_at' => now(),
+            'suspension_reason' => 'Administrative test suspension.',
+        ])->save();
         Sanctum::actingAs($superadmin, ['portal:access']);
 
         $response = $this->getApi('/users?filter[search]=northern');
@@ -41,6 +46,11 @@ class ProtectedAdministrativeSearchTest extends TestCase
             ->assertJsonMissingPath('data.0.profile.user_id')
             ->assertJsonPath('meta.pagination.per_page', 25)
             ->assertJsonPath('meta.pagination.has_more', false);
+
+        $this->getApi('/users?filter[status]=suspended')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $suspended->public_id);
     }
 
     public function test_user_listing_uses_cursor_pagination(): void

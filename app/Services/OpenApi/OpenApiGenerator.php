@@ -90,7 +90,7 @@ class OpenApiGenerator
         if (in_array($method, ['post', 'put', 'patch'], true)) {
             $operation['requestBody'] = [
                 'required' => true,
-                'content' => ['application/json' => ['schema' => ['$ref' => '#/components/schemas/JsonObject']]],
+                'content' => ['application/json' => ['schema' => $this->requestSchema($name)]],
             ];
         }
 
@@ -107,6 +107,7 @@ class OpenApiGenerator
         $filters = match (true) {
             str_ends_with($name, 'users.index') => [
                 $this->queryParameter('filter[search]', ['type' => 'string', 'minLength' => 2, 'maxLength' => 100]),
+                $this->queryParameter('filter[status]', ['type' => 'string', 'enum' => ['active', 'suspended']]),
             ],
             str_ends_with($name, 'organizations.index'), str_ends_with($name, 'artists.index') => [
                 $this->queryParameter('filter[search]', ['type' => 'string', 'minLength' => 2, 'maxLength' => 100]),
@@ -140,6 +141,51 @@ class OpenApiGenerator
             'in' => 'query',
             'required' => false,
             'schema' => $schema,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function requestSchema(string $name): array
+    {
+        if (str_ends_with($name, 'users.status.update')) {
+            return [
+                'type' => 'object',
+                'additionalProperties' => false,
+                'required' => ['status', 'reason', 'confirmation'],
+                'properties' => [
+                    'status' => ['type' => 'string', 'enum' => ['active', 'suspended']],
+                    'reason' => ['type' => 'string', 'minLength' => 10, 'maxLength' => 500],
+                    'confirmation' => ['type' => 'string', 'description' => 'Public ID of the target user.'],
+                ],
+            ];
+        }
+
+        if (str_ends_with($name, 'users.organization-memberships.role.update')) {
+            return $this->roleCorrectionSchema(['label_admin', 'label_user']);
+        }
+
+        if (str_ends_with($name, 'users.artist-memberships.role.update')) {
+            return $this->roleCorrectionSchema(['artist_admin', 'artist_user']);
+        }
+
+        return ['$ref' => '#/components/schemas/JsonObject'];
+    }
+
+    /**
+     * @param  list<string>  $roles
+     * @return array<string, mixed>
+     */
+    private function roleCorrectionSchema(array $roles): array
+    {
+        return [
+            'type' => 'object',
+            'additionalProperties' => false,
+            'required' => ['role', 'reason', 'confirmation'],
+            'properties' => [
+                'role' => ['type' => 'string', 'enum' => $roles],
+                'reason' => ['type' => 'string', 'minLength' => 10, 'maxLength' => 500],
+                'confirmation' => ['type' => 'string', 'description' => 'Public ID of the target user.'],
+            ],
         ];
     }
 

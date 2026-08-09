@@ -4691,6 +4691,48 @@
                 ]
             }
         },
+        "/api/v1/platform/overview": {
+            "get": {
+                "operationId": "api_v1_platform_overview",
+                "tags": [
+                    "Platform"
+                ],
+                "summary": "Platform Overview",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/public/artists": {
             "get": {
                 "operationId": "api_v1_public_artists_index",
@@ -6859,6 +6901,18 @@
                         }
                     },
                     {
+                        "name": "filter[status]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "suspended"
+                            ]
+                        }
+                    },
+                    {
                         "name": "page[size]",
                         "in": "query",
                         "required": false,
@@ -6918,6 +6972,328 @@
                         "cookieAuth": []
                     }
                 ]
+            }
+        },
+        "/api/v1/users/{user}": {
+            "get": {
+                "operationId": "api_v1_users_show",
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Users Show",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{user}/artist-memberships/{membership}/role": {
+            "patch": {
+                "operationId": "api_v1_users_artist-memberships_role_update",
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Users Artist Memberships Role Update",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "membership",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "role",
+                                    "reason",
+                                    "confirmation"
+                                ],
+                                "properties": {
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "artist_admin",
+                                            "artist_user"
+                                        ]
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "minLength": 10,
+                                        "maxLength": 500
+                                    },
+                                    "confirmation": {
+                                        "type": "string",
+                                        "description": "Public ID of the target user."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{user}/organization-memberships/{membership}/role": {
+            "patch": {
+                "operationId": "api_v1_users_organization-memberships_role_update",
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Users Organization Memberships Role Update",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "membership",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "role",
+                                    "reason",
+                                    "confirmation"
+                                ],
+                                "properties": {
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "label_admin",
+                                            "label_user"
+                                        ]
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "minLength": 10,
+                                        "maxLength": 500
+                                    },
+                                    "confirmation": {
+                                        "type": "string",
+                                        "description": "Public ID of the target user."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{user}/status": {
+            "patch": {
+                "operationId": "api_v1_users_status_update",
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Users Status Update",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "status",
+                                    "reason",
+                                    "confirmation"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "active",
+                                            "suspended"
+                                        ]
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "minLength": 10,
+                                        "maxLength": 500
+                                    },
+                                    "confirmation": {
+                                        "type": "string",
+                                        "description": "Public ID of the target user."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/v1/webhooks/resend": {

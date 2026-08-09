@@ -2,10 +2,16 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\SuperadminRequest;
+use App\Http\Requests\Api\V1\UpdateUserStatusRequest;
 use App\Http\Requests\Api\V1\UserIndexRequest;
+use App\Http\Resources\UserDetailResource;
 use App\Http\Resources\UserResource;
+use App\Http\Responses\ApiResponse;
 use App\Models\User;
+use App\Services\Administration\UserAccountService;
 use App\Services\Api\CursorPagination;
 use Illuminate\Http\JsonResponse;
 
@@ -26,6 +32,10 @@ final class UserController extends Controller
             });
         }
 
+        if ($request->filled('filter.status')) {
+            $query->where('status', $request->string('filter.status')->toString());
+        }
+
         $payload = $pagination->paginate(
             $query,
             $request,
@@ -33,5 +43,39 @@ final class UserController extends Controller
         );
 
         return response()->json($payload);
+    }
+
+    public function show(SuperadminRequest $request, User $user): JsonResponse
+    {
+        $user->load([
+            'profile',
+            'organizationMemberships.organization.profile',
+            'organizationMemberships.organization.artistRelationships' => fn ($query) => $query->whereNull('ended_at'),
+            'organizationMemberships.organization.artistRelationships.artist.profile',
+            'organizationMemberships.organization.releases',
+            'artistMemberships.artist.profile',
+            'artistMemberships.artist.organizationRelationships' => fn ($query) => $query->whereNull('ended_at'),
+            'artistMemberships.artist.organizationRelationships.organization.profile',
+            'artistMemberships.artist.ownedReleases',
+            'releaseEditorAssignments.release',
+        ]);
+
+        return ApiResponse::success((new UserDetailResource($user))->resolve($request));
+    }
+
+    public function updateStatus(
+        UpdateUserStatusRequest $request,
+        User $user,
+        UserAccountService $service,
+    ): JsonResponse {
+        $updated = $service->updateStatus(
+            $user,
+            UserStatus::from($request->string('status')->toString()),
+            $request->string('reason')->toString(),
+            $request->user(),
+            $request,
+        );
+
+        return ApiResponse::success((new UserResource($updated))->resolve($request));
     }
 }

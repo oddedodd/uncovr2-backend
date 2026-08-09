@@ -17,19 +17,27 @@ final class MembershipService
 {
     public function __construct(private readonly SecurityAuditLogger $auditLogger) {}
 
-    public function updateOrganization(OrganizationMembership $membership, array $changes, User $actor, Request $request): OrganizationMembership
+    /** @param array<string, scalar|null> $auditMetadata */
+    public function updateOrganization(OrganizationMembership $membership, array $changes, User $actor, Request $request, array $auditMetadata = []): OrganizationMembership
     {
-        return DB::transaction(function () use ($membership, $changes, $actor, $request): OrganizationMembership {
+        return DB::transaction(function () use ($membership, $changes, $actor, $request, $auditMetadata): OrganizationMembership {
             $locked = OrganizationMembership::query()->lockForUpdate()->findOrFail($membership->getKey());
             $this->guardOrganizationAdmin($locked, $changes);
             $event = isset($changes['status']) ? 'organization.membership_status_changed' : 'organization.membership_role_changed';
+            $previousRole = $locked->role->value;
+            $previousStatus = $locked->status->value;
             if (isset($changes['status'])) {
                 $changes['suspended_at'] = $changes['status'] === MembershipStatus::Suspended->value ? now() : null;
             }
             $locked->update($changes);
             $this->auditLogger->record($event, $actor, $request, metadata: [
+                ...$auditMetadata,
                 'organization_id' => $locked->organization->public_id,
                 'membership_id' => $locked->public_id,
+                'previous_role' => $previousRole,
+                'new_role' => $locked->role->value,
+                'previous_status' => $previousStatus,
+                'new_status' => $locked->status->value,
             ]);
 
             return $locked;
@@ -51,19 +59,27 @@ final class MembershipService
         });
     }
 
-    public function updateArtist(ArtistMembership $membership, array $changes, User $actor, Request $request): ArtistMembership
+    /** @param array<string, scalar|null> $auditMetadata */
+    public function updateArtist(ArtistMembership $membership, array $changes, User $actor, Request $request, array $auditMetadata = []): ArtistMembership
     {
-        return DB::transaction(function () use ($membership, $changes, $actor, $request): ArtistMembership {
+        return DB::transaction(function () use ($membership, $changes, $actor, $request, $auditMetadata): ArtistMembership {
             $locked = ArtistMembership::query()->lockForUpdate()->findOrFail($membership->getKey());
             $this->guardArtistAdmin($locked, $changes);
             $event = isset($changes['status']) ? 'artist.membership_status_changed' : 'artist.membership_role_changed';
+            $previousRole = $locked->role->value;
+            $previousStatus = $locked->status->value;
             if (isset($changes['status'])) {
                 $changes['suspended_at'] = $changes['status'] === MembershipStatus::Suspended->value ? now() : null;
             }
             $locked->update($changes);
             $this->auditLogger->record($event, $actor, $request, metadata: [
+                ...$auditMetadata,
                 'artist_id' => $locked->artist->public_id,
                 'membership_id' => $locked->public_id,
+                'previous_role' => $previousRole,
+                'new_role' => $locked->role->value,
+                'previous_status' => $previousStatus,
+                'new_status' => $locked->status->value,
             ]);
 
             return $locked;

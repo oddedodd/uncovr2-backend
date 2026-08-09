@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Auth;
 
+use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\LoginRequest;
 use App\Http\Responses\ApiResponse;
@@ -38,6 +39,21 @@ final class LoginController extends Controller
 
         if (! $provider->validateCredentials($user, ['password' => $password])) {
             return $this->invalidCredentials($request, $user);
+        }
+
+        if ($user->status === UserStatus::Suspended) {
+            $this->auditLogger->record(
+                'auth.login_blocked_suspended',
+                $user,
+                $request,
+                metadata: ['client_type' => $request->string('client_type')->toString()],
+            );
+
+            return ApiResponse::error(
+                code: 'account_suspended',
+                message: 'This account is suspended. Contact support for assistance.',
+                status: 403,
+            )->header('Cache-Control', 'no-store');
         }
 
         $this->rehashPasswordIfRequired($provider, $user, $password);

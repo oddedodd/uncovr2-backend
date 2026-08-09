@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Enums\UserStatus;
 use App\Models\DeviceSession;
 use App\Models\RefreshToken;
 use Carbon\CarbonInterface;
@@ -59,6 +60,12 @@ final class RefreshTokenRotationService
             }
 
             if ($session->revoked_at !== null) {
+                return ['status' => 'invalid'];
+            }
+
+            if ($session->user->status === UserStatus::Suspended) {
+                $this->revokeSession($session, $now, 'account_suspended');
+
                 return ['status' => 'invalid'];
             }
 

@@ -251,6 +251,8 @@ The complete portal-to-mobile gate still remains required before Expo work.
 - [x] `B8.8` Run the complete test suite against a production-like environment.
 - [x] `B8.9` Add protected, scope-aware and cursor-paginated portal search for
   users, organizations, artists and releases.
+- [x] `B8.10` Add superadmin platform overview, user hierarchy, account
+  suspension and audited role-correction contracts required by portal P2.
 
 ## Backend release-readiness gate
 

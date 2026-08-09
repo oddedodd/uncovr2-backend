@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Api\V1;
 
+use App\Enums\UserStatus;
 use App\Http\Requests\Api\V1\Concerns\ValidatesCursorPagination;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 final class UserIndexRequest extends StrictFormRequest
@@ -17,8 +19,9 @@ final class UserIndexRequest extends StrictFormRequest
     public function rules(): array
     {
         return [
-            'filter' => ['sometimes', 'array:search'],
+            'filter' => ['sometimes', 'array:search,status'],
             'filter.search' => ['sometimes', 'string', 'min:2', 'max:100'],
+            'filter.status' => ['sometimes', 'string', Rule::enum(UserStatus::class)],
             ...$this->paginationRules(),
         ];
     }
