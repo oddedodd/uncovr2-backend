@@ -1,10 +1,12 @@
-# Uncovr 2.0 implementation plan
+# Uncovr backend implementation plan
 
 Last updated: 2026-08-09
 
-This roadmap translates the Uncovr 2.0 product plan into an ordered delivery
-sequence for Codex. It is the operational plan; the full product plan remains
-the source for product intent, roles, privacy requirements and MVP scope.
+This plan owns Laravel API, database, storage, email and backend operations work.
+The [cross-repository roadmap](https://github.com/oddedodd/Uncovr2-implentation-docs/blob/main/IMPLEMENTATION_PLAN.md)
+is maintained in the workspace meta-repository, while
+[portal work](https://github.com/oddedodd/uncovr2-portal/blob/main/IMPLEMENTATION_PLAN.md)
+is maintained in the portal repository.
 
 ## How we use this plan
 
@@ -12,11 +14,12 @@ the source for product intent, roles, privacy requirements and MVP scope.
 - `[ ]` means not completed.
 - Work starts at the first unchecked item in the active milestone.
 - Checkboxes are updated only after relevant tests and acceptance criteria pass.
-- Every task has a stable ID, such as `B2.4`, which can be referenced in a Codex prompt.
-- We complete each phase gate before starting the next product surface.
-- Expo work does not begin until the Laravel API and React portal pass their gates.
+- Task IDs remain stable so they can be referenced in issues, commits and prompts.
+- The backend-to-portal gate after B0 through B6 must pass before dependent
+  portal feature work begins.
+- B7 begins only after the portal phase gate and immediately before Expo work.
 
-## Fixed architecture decisions
+## Backend architecture
 
 - Laravel owns authentication, authorization, validation and domain logic.
 - Supabase Auth is not used for Uncovr accounts.
@@ -25,32 +28,13 @@ the source for product intent, roles, privacy requirements and MVP scope.
   Notifications so domain code is not coupled directly to the provider SDK.
 - Laravel tables live in the private `laravel` schema.
 - Clients never connect directly to Laravel's database tables.
-- The portal is a React and TypeScript single-page application built with Vite,
-  React Router Data Mode and TanStack Query.
-- The portal lives in a separate `uncover-portal` Git repository beside the
-  `uncover-backend` repository.
-- Laravel is the portal's only backend. Portal code calls the versioned Laravel
-  API directly and must not duplicate authentication, authorization, validation
-  or domain logic in a frontend server layer.
-- Production uses `https://admin.uncovr.no` for the statically hosted portal and
-  `https://api.uncovr.no` for Laravel. Both must remain below the same
-  registrable domain so Laravel Sanctum can use first-party session cookies.
-- Local development uses `http://localhost:5173` for Vite and
-  `http://localhost:8000` for Laravel. Both processes must use `localhost`
-  consistently rather than mixing it with `127.0.0.1`.
-- The portal uses Laravel Sanctum's stateful session cookie and CSRF flow, never
-  browser-stored access or refresh tokens. Credentialed CORS is restricted to
-  the exact portal origin in each environment.
-- The Expo app is the listener interface and is deferred until the portal is usable end to end.
+- Production exposes Laravel at `https://api.uncovr.no`; local development uses
+  `http://localhost:8000`.
+- The admin portal authenticates through Laravel Sanctum's stateful session and
+  CSRF flow. Mobile clients use the documented rotating-token flow.
 - One user account may be a listener and hold memberships in several labels or artists.
 - Roles grant scope; Laravel Policies enforce access on every protected operation.
 - Labels and artists receive aggregate listener insights, never individual private collections.
-
-## Delivery order
-
-1. `B` — Laravel backend and API.
-2. `P` — React portal.
-3. `M` — Expo listener app.
 
 ---
 
@@ -216,6 +200,15 @@ the source for product intent, roles, privacy requirements and MVP scope.
 - [x] `B6.6` Prevent drafts, internal notes and private membership data from leaking.
 - [x] `B6.7` Add contract tests for all public representations.
 
+## Backend-to-portal gate
+
+- [ ] Superadmin can create or approve a label and inspect its hierarchy through the API.
+- [ ] Label Admin can manage team members and create an artist.
+- [ ] Artist Admin can manage its team and create a release.
+- [ ] A release can progress from draft to published.
+- [ ] Unauthorized and cross-tenant API operations are rejected and tested.
+- [ ] Portal-required API contracts and local Sanctum behavior are documented and stable.
+
 ## B7 — Listener domain, privacy and notifications
 
 This backend work may begin after the portal gate, immediately before Expo work.
@@ -256,193 +249,10 @@ This backend work may begin after the portal gate, immediately before Expo work.
 - [ ] `B8.7` Seed a deterministic demo label, users, artists and release.
 - [ ] `B8.8` Run the complete test suite against a production-like environment.
 
-## Backend phase gate
+## Backend release-readiness gate
 
-- [ ] Superadmin can create or approve a label and inspect its hierarchy through the API.
-- [ ] Label Admin can manage team members and create an artist.
-- [ ] Artist Admin can manage its team and create a release.
-- [ ] A release can progress from draft to published.
-- [ ] Unauthorized and cross-tenant API operations are rejected and tested.
+- [ ] The backend-to-portal gate remains satisfied.
+- [ ] Listener-domain privacy, synchronization and notification behavior in B7 is tested.
 - [ ] Database, queue, email, storage and monitoring integrations are documented.
 - [ ] Resend domain authentication, queued sending, idempotency, signed webhooks,
   bounce handling and alerting have passed a production-like verification.
-
----
-
-# P — React portal
-
-Portal work begins only after the backend phase gate passes for B1 through B6.
-
-## P0 — Portal foundation
-
-- [x] `P0.1` Use a separate sibling Git repository named `uncover-portal`.
-- [ ] `P0.2` Scaffold current stable React and TypeScript with Vite and pin dependencies.
-- [ ] `P0.3` Add React Router in Data Mode and TanStack Query without introducing a frontend server layer.
-- [ ] `P0.4` Add formatting, linting, unit tests and CI.
-- [ ] `P0.5` Validate environment variables and configure the Laravel API base URL as
-  `http://localhost:8000` locally and `https://api.uncovr.no` in production.
-- [ ] `P0.6` Build a typed API client with credentialed requests, CSRF support,
-  consistent API errors and request IDs.
-- [ ] `P0.7` Configure local development on `http://localhost:5173` and document
-  that portal and API must use the same `localhost` hostname.
-- [ ] `P0.8` Configure static SPA hosting at `https://admin.uncovr.no`, including
-  history fallback so direct navigation to client routes serves `index.html`.
-- [ ] `P0.9` Align Laravel CORS, Sanctum stateful domains and session-cookie settings
-  with the exact local and production portal origins.
-- [ ] `P0.10` Establish accessible layout, forms, feedback and responsive breakpoints.
-
-## P1 — Authentication and role-aware shell
-
-- [ ] `P1.1` Build registration, login, verification and password-reset screens.
-- [ ] `P1.2` Initialize CSRF through `/sanctum/csrf-cookie`, authenticate with
-  Laravel's secure HTTP-only session cookie and send credentials on every API request.
-- [ ] `P1.3` Build account, active-session and logout screens.
-- [ ] `P1.4` Load the current user's memberships and available workspaces.
-- [ ] `P1.5` Build role-aware navigation without treating hidden UI as authorization.
-- [ ] `P1.6` Add forbidden, expired-session, empty and error states.
-
-## P2 — Superadmin workflow
-
-- [ ] `P2.1` Build platform overview and operational status.
-- [ ] `P2.2` Build user, organization, artist and release search.
-- [ ] `P2.3` Build organization creation, approval, suspension and correction flows.
-- [ ] `P2.4` Show user memberships and resource hierarchy.
-- [ ] `P2.5` Build role correction and account suspension with confirmation and audit context.
-- [ ] `P2.6` Verify that superadmin operations use protected Laravel endpoints only.
-
-### P2 gate
-
-- [ ] A superadmin can establish a label and its first administrator entirely in the portal.
-
-## P3 — Label workflow
-
-- [ ] `P3.1` Build label dashboard and profile editor.
-- [ ] `P3.2` Build team listing, invitations, role changes and removals.
-- [ ] `P3.3` Build artist listing and artist creation.
-- [ ] `P3.4` Assign an Artist Admin during artist onboarding.
-- [ ] `P3.5` Show all permitted releases across label artists.
-- [ ] `P3.6` Verify Label User restrictions for owned and assigned work.
-
-### P3 gate
-
-- [ ] Label Admin can manage its label, team and artists without developer help.
-- [ ] Label User cannot administer team members or unrestricted content.
-
-## P4 — Artist workflow
-
-- [ ] `P4.1` Build artist dashboard and profile editor.
-- [ ] `P4.2` Build artist team invitations, roles and removal.
-- [ ] `P4.3` Build release listing with status, ownership and assignment filters.
-- [ ] `P4.4` Build release creation and basic metadata editing.
-- [ ] `P4.5` Verify Artist User restrictions for owned and assigned work.
-
-### P4 gate
-
-- [ ] Artist Admin can manage its profile, team and releases.
-- [ ] Artist User cannot administer roles or alter another user's unassigned work.
-
-## P5 — Release builder
-
-- [ ] `P5.1` Build release metadata, artist and date forms.
-- [ ] `P5.2` Build sortable track management.
-- [ ] `P5.3` Build page management for releases and tracks.
-- [ ] `P5.4` Build the first accessible block-editor interface.
-- [ ] `P5.5` Build media upload, selection, replacement and removal.
-- [ ] `P5.6` Build streaming-link and credit editors.
-- [ ] `P5.7` Build responsive preview using the public release representation.
-- [ ] `P5.8` Build review, approval, scheduling, publishing and unpublishing controls.
-- [ ] `P5.9` Preserve unsaved-work warnings and actionable validation feedback.
-
-## P6 — Portal quality and demo readiness
-
-- [ ] `P6.1` Add aggregate statistics without exposing listener identities.
-- [ ] `P6.2` Add loading, empty, offline and recoverable error states.
-- [ ] `P6.3` Verify keyboard navigation and screen-reader fundamentals.
-- [ ] `P6.4` Verify phone, tablet and desktop layouts.
-- [ ] `P6.5` Add end-to-end tests for superadmin, label and artist journeys.
-- [ ] `P6.6` Run an authorization-focused security review.
-- [ ] `P6.7` Deploy a production-like portal connected to a safe environment.
-
-## Portal phase gate
-
-- [ ] Superadmin creates or approves a label and its administrator.
-- [ ] Label Admin invites team members and creates an artist with an Artist Admin.
-- [ ] Artist Admin creates a release with tracks, media, credits and rich content.
-- [ ] The release is previewed, approved and published entirely through the portal.
-- [ ] Lower-privileged users are blocked from forbidden actions in both UI and API.
-- [ ] The complete workflow passes automated end-to-end tests.
-
-Only after this gate passes do we schedule Expo implementation.
-
----
-
-# M — Expo listener app (future)
-
-## M0 — Mobile planning gate
-
-- [ ] `M0.1` Revalidate listener journeys against pilot feedback.
-- [ ] `M0.2` Freeze the mobile API contracts required for the first build.
-- [ ] `M0.3` Define supported iOS and Android versions and accessibility baseline.
-- [ ] `M0.4` Scaffold Expo/React Native with pinned dependencies and CI builds.
-
-## M1 — Mobile identity
-
-- [ ] `M1.1` Build registration, verification, login and password reset.
-- [ ] `M1.2` Store access and refresh credentials in secure device storage.
-- [ ] `M1.3` Implement refresh rotation, logout and revoked-session handling.
-- [ ] `M1.4` Build profile, active-device and privacy controls.
-
-## M2 — Discovery and release experience
-
-- [ ] `M2.1` Build home, featured and recent content.
-- [ ] `M2.2` Build search for labels, artists and releases.
-- [ ] `M2.3` Build label and artist profiles.
-- [ ] `M2.4` Build release, track, page and content-block rendering.
-- [ ] `M2.5` Open music in the listener's preferred streaming service.
-- [ ] `M2.6` Add sharing and deep links.
-
-## M3 — Personal listener features
-
-- [ ] `M3.1` Follow and unfollow artists idempotently.
-- [ ] `M3.2` Favorite releases and tracks idempotently.
-- [ ] `M3.3` Build private, sortable collections.
-- [ ] `M3.4` Synchronize changes across at least two devices.
-- [ ] `M3.5` Handle pagination, server time and conflicting updates safely.
-
-## M4 — Notifications, privacy and launch
-
-- [ ] `M4.1` Register and deactivate push-notification devices.
-- [ ] `M4.2` Build notification center and preference controls.
-- [ ] `M4.3` Implement data export and account deletion in the app.
-- [ ] `M4.4` Add analytics with documented consent and data minimization.
-- [ ] `M4.5` Complete accessibility, performance and security testing.
-- [ ] `M4.6` Prepare App Store and Google Play requirements.
-- [ ] `M4.7` Run a pilot with one label, two to five artists and real listeners.
-
----
-
-# Explicitly deferred beyond MVP
-
-- Own music streaming.
-- Royalty and complex contract management.
-- Automatic music distribution.
-- Full label CRM.
-- Social feed, comments and direct messages.
-- Advanced recommendation engine.
-- Fan clubs, tickets and merchandise.
-- Public or collaborative collections until privacy and moderation are ready.
-- Passkeys, social login and two-factor authentication until the core identity flow is stable.
-
-# Decision log
-
-Record meaningful decisions here so later Codex sessions do not reopen them
-without new evidence.
-
-| Date | Decision | Reason |
-|---|---|---|
-| 2026-08-07 | Laravel owns authentication; Supabase Auth is not used. | Keeps identity, roles and business authorization in one system. |
-| 2026-08-07 | Laravel data uses the private `laravel` schema. | Prevents accidental exposure through Supabase Data API. |
-| 2026-08-07 | Next.js was selected as the only operational UI for platform, label and artist users. | Superseded on 2026-08-09 after the portal and backend responsibilities were clarified. |
-| 2026-08-09 | The operational portal is a React and TypeScript SPA built with Vite, React Router Data Mode and TanStack Query in a separate `uncover-portal` repository. | The authenticated portal does not need SEO or server rendering; static hosting keeps Laravel as the single backend and avoids a redundant frontend server layer. |
-| 2026-08-09 | Production uses `admin.uncovr.no` for the portal and `api.uncovr.no` for Laravel; local development uses `localhost:5173` and `localhost:8000`. | The shared registrable domain enables Sanctum session cookies in production, while explicit local origins keep credentialed CORS and CSRF behavior predictable. |
-| 2026-08-07 | Expo begins only after the full portal release workflow passes. | Proves content production before building the listener client. |
