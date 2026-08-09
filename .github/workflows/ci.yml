@@ -70,3 +70,102 @@ jobs:
 
       - name: Build frontend assets
         run: npm run build
+
+  production-like:
+    name: PostgreSQL production-like gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: uncovr_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d uncovr_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: uncovr_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_SCHEMA: laravel
+      DB_SSLMODE: disable
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pdo_pgsql
+          coverage: none
+          tools: composer:v2
+        env:
+          fail-fast: true
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare private schema and Supabase-compatible roles
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d uncovr_test <<'SQL'
+          DO $$ BEGIN
+            CREATE ROLE anon NOLOGIN;
+          EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+          DO $$ BEGIN
+            CREATE ROLE authenticated NOLOGIN;
+          EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+          DO $$ BEGIN
+            CREATE ROLE service_role NOLOGIN;
+          EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+          CREATE SCHEMA IF NOT EXISTS laravel AUTHORIZATION postgres;
+          SQL
+
+      - name: Run complete suite on PostgreSQL 17
+        run: php artisan test --configuration phpunit.production.xml
+
+      - name: Verify production configuration, demo seed and release gate
+        env:
+          APP_ENV: production
+          APP_KEY: base64:MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=
+          APP_DEBUG: 'false'
+          APP_URL: https://api.uncovr.test
+          LOG_CHANNEL: stack
+          LOG_STACK: stderr
+          MAIL_MAILER: resend
+          MAIL_FROM_ADDRESS: accounts@mail.uncovr.no
+          MAIL_REPLY_TO_ADDRESS: support@uncovr.no
+          RESEND_API_KEY: re_ci_placeholder
+          RESEND_WEBHOOK_SECRET: whsec_ci_placeholder
+          RESEND_WEBHOOK_URL: https://api.uncovr.test/api/v1/webhooks/resend
+          SUPABASE_URL: https://project.supabase.co
+          SUPABASE_SECRET_KEY: sb_secret_ci_placeholder
+          QUEUE_CONNECTION: database
+          DB_QUEUE_CONNECTION: pgsql
+          CACHE_STORE: database
+          SESSION_DRIVER: database
+          DEMO_SEED_ENABLED: true
+          DEMO_SEED_PASSWORD: Demo-CI-Password-2026!
+        run: |
+          export RESEND_API_KEY_ROTATED_AT="$(date -u +%F)"
+          export RESEND_WEBHOOK_SECRET_ROTATED_AT="$(date -u +%F)"
+          php artisan migrate:fresh --force
+          php artisan db:seed --class=DemoSeeder --force
+          php artisan db:seed --class=DemoSeeder --force
+          php artisan api:openapi --check
+          php artisan release:check --production-like
+          php artisan operations:check --json --no-alert

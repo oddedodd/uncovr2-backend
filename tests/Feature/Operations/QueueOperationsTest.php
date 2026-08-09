@@ -120,6 +120,7 @@ class QueueOperationsTest extends TestCase
         $this->assertTrue($commands->contains(fn (string $command): bool => str_contains($command, 'queue:monitor')));
         $this->assertTrue($commands->contains(fn (string $command): bool => str_contains($command, 'queue:prune-failed')));
         $this->assertTrue($commands->contains(fn (string $command): bool => str_contains($command, 'queue:prune-batches')));
+        $this->assertTrue($commands->contains(fn (string $command): bool => str_contains($command, 'operations:check')));
     }
 
     public function test_failed_jobs_are_durable_and_pruned_after_the_retention_window(): void

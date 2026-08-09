@@ -52,3 +52,7 @@ Schedule::command('queue:prune-batches', [
     '--unfinished' => config('queue.monitoring.batch_retention_hours'),
     '--cancelled' => config('queue.monitoring.batch_retention_hours'),
 ])->daily()->withoutOverlapping();
+
+Schedule::command('operations:check')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();

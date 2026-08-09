@@ -1,5 +1,6 @@
 <?php
 
+use App\Logging\RedactSensitiveLogContext;
 use Illuminate\Log\Formatters\JsonFormatter;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
@@ -68,6 +69,7 @@ return [
             'formatter_with' => [
                 'includeStacktraces' => true,
             ],
+            'tap' => [RedactSensitiveLogContext::class],
         ],
 
         'daily' => [
@@ -80,6 +82,7 @@ return [
             'formatter_with' => [
                 'includeStacktraces' => true,
             ],
+            'tap' => [RedactSensitiveLogContext::class],
         ],
 
         'slack' => [
@@ -89,6 +92,7 @@ return [
             'emoji' => env('LOG_SLACK_EMOJI', ':boom:'),
             'level' => env('LOG_LEVEL', 'critical'),
             'replace_placeholders' => true,
+            'tap' => [RedactSensitiveLogContext::class],
         ],
 
         'papertrail' => [
@@ -101,6 +105,7 @@ return [
                 'connectionString' => 'tls://'.env('PAPERTRAIL_URL').':'.env('PAPERTRAIL_PORT'),
             ],
             'processors' => [PsrLogMessageProcessor::class],
+            'tap' => [RedactSensitiveLogContext::class],
         ],
 
         'stderr' => [
@@ -115,6 +120,7 @@ return [
                 'includeStacktraces' => true,
             ],
             'processors' => [PsrLogMessageProcessor::class],
+            'tap' => [RedactSensitiveLogContext::class],
         ],
 
         'syslog' => [
@@ -122,12 +128,14 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'facility' => env('LOG_SYSLOG_FACILITY', LOG_USER),
             'replace_placeholders' => true,
+            'tap' => [RedactSensitiveLogContext::class],
         ],
 
         'errorlog' => [
             'driver' => 'errorlog',
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
+            'tap' => [RedactSensitiveLogContext::class],
         ],
 
         'null' => [

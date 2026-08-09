@@ -37,6 +37,7 @@ use App\Http\Controllers\Api\V1\ReleaseArtistController;
 use App\Http\Controllers\Api\V1\ReleaseController;
 use App\Http\Controllers\Api\V1\ReleaseEditorController;
 use App\Http\Controllers\Api\V1\ReleasePublicationController;
+use App\Http\Controllers\Api\V1\ResendWebhookController;
 use App\Http\Controllers\Api\V1\StreamingLinkController;
 use App\Http\Controllers\Api\V1\TrackController;
 use App\Http\Middleware\PreventPrivateResponseCaching;
@@ -66,6 +67,10 @@ Route::prefix('health')->name('health.')->group(function (): void {
     Route::get('/live', [HealthController::class, 'live'])->name('live');
     Route::get('/ready', [HealthController::class, 'ready'])->name('ready');
 });
+
+Route::post('/webhooks/resend', ResendWebhookController::class)
+    ->middleware('throttle:webhooks')
+    ->name('webhooks.resend');
 
 Route::prefix('auth')->name('auth.')->group(function (): void {
     Route::middleware('throttle:authentication')->group(function (): void {

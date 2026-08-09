@@ -23,6 +23,10 @@ Backend conventions are documented in:
 - [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md)
 - [docs/IDENTIFIERS.md](docs/IDENTIFIERS.md)
 - [docs/QUEUE_OPERATIONS.md](docs/QUEUE_OPERATIONS.md)
+- [docs/EMAIL_DELIVERY.md](docs/EMAIL_DELIVERY.md)
+- [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md)
+- [docs/OPERATIONS_RUNBOOK.md](docs/OPERATIONS_RUNBOOK.md)
+- [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md)
 
 Work should proceed from the first unchecked task in the active milestone. A
 phase gate must be satisfied before work starts on the next product surface.
@@ -71,9 +75,9 @@ composer dev
 
 ## Tests and quality checks
 
-Tests always use an in-memory SQLite database configured in `phpunit.xml`.
-They do not connect to Supabase, even when the local `.env` contains production
-database credentials.
+Local tests use an in-memory SQLite database configured in `phpunit.xml` and do
+not connect to Supabase, even when `.env` contains production credentials. CI
+also runs the complete suite on PostgreSQL 17 in the private `laravel` schema.
 
 ```bash
 composer validate --strict
@@ -83,4 +87,5 @@ php artisan test
 ```
 
 GitHub Actions runs the same validation, audit, formatting and test checks for
-every pull request and every push to `main`.
+every pull request and every push to `main`. Its production-like job also seeds
+the deterministic demo account hierarchy and runs `release:check`.

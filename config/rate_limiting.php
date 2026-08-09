@@ -24,4 +24,9 @@ return [
         1,
         (int) env('RATE_LIMIT_REFRESH_PER_TOKEN_PER_MINUTE', 10),
     ),
+
+    'webhooks_per_minute' => max(
+        1,
+        (int) env('RATE_LIMIT_WEBHOOKS_PER_MINUTE', 300),
+    ),
 ];

@@ -17,11 +17,15 @@ MAIL_REPLY_TO_ADDRESS=support@uncovr.no
 MAIL_REPLY_TO_NAME="Uncovr support"
 MAIL_QUEUE=emails
 RESEND_API_KEY=re_...
+RESEND_WEBHOOK_SECRET=whsec_...
+RESEND_WEBHOOK_URL=https://api.uncovr.no/api/v1/webhooks/resend
+RESEND_API_KEY_ROTATED_AT=YYYY-MM-DD
+RESEND_WEBHOOK_SECRET_ROTATED_AT=YYYY-MM-DD
 ```
 
 The application fails fast whenever the Resend mailer is enabled without an API
-key, sender, or reply-to address. `RESEND_WEBHOOK_SECRET` is reserved for the
-signed delivery-webhook work in B8 and must also remain outside Git.
+key, sender, or reply-to address. Production additionally requires a `whsec_`
+webhook secret and an HTTPS callback URL. All secrets remain outside Git.
 
 Local development deliberately keeps `MAIL_MAILER=log`; a real Resend key is
 not required for automated or day-to-day local work. Staging and production
@@ -66,7 +70,7 @@ owners and rotation dates are recorded in the deployment secret manager.
 
 The real staging delivery remains intentionally manual. Record its date,
 recipient, Resend message ID, SPF result, DKIM result, DMARC result, and inbox
-placement when completing B2.14.
+placement in the release record.
 
 ### B2.14 smoke-test record
 
@@ -91,6 +95,39 @@ php artisan email:resend-smoke-test \
   --to=controlled@example.com \
   --confirm=controlled@example.com
 ```
+
+## Signed delivery webhooks
+
+Create one Resend webhook endpoint pointing to
+`https://api.uncovr.no/api/v1/webhooks/resend`, subscribe it to `email.sent`,
+`email.delivery_delayed`, `email.delivered`, `email.bounced`,
+`email.complained`, `email.suppressed` and `email.failed`, then copy its signing
+secret to `RESEND_WEBHOOK_SECRET`. Laravel verifies the untouched request body
+against `svix-id`, `svix-timestamp` and `svix-signature` before parsing it.
+Invalid, expired, malformed and oversized requests are rejected.
+
+`svix-id` is unique in the database, so retries are acknowledged but processed
+once. A newer terminal outcome cannot be overwritten by a late `sent` or
+`delivered` event. The database stores only provider message ID, delivery state,
+event type and timestamps—never recipients, subject lines, email bodies or raw
+webhook payloads.
+
+Run `php artisan operations:check --json` to inspect queue failures, provider
+failures, bounce rate and complaint rate. The scheduler runs the same check
+every five minutes and emits redacted structured alerts after configured
+thresholds are exceeded.
+
+The production-like PostgreSQL CI job exercises valid, invalid, expired,
+replayed, duplicate, out-of-order, delivered and bounced signed requests through
+the real HTTP route. For a deployment smoke test, send to an approved address,
+confirm a `delivered` event and use a Resend-supported bounce test recipient to
+confirm a `bounced` event. Store only the message IDs and result in the release
+record. Do not use a real customer address for bounce testing.
+
+Rotate API and webhook secrets separately: add the replacement in Resend,
+deploy it, verify one send or signed event, revoke the old credential, and update
+the matching `*_ROTATED_AT` date. `release:check --production-like` fails when a
+date is missing or older than the configured maximum age.
 
 ## Safe local preview and tests
 

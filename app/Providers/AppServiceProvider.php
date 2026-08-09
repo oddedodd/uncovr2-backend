@@ -108,6 +108,19 @@ class AppServiceProvider extends ServiceProvider
                 throw new RuntimeException("{$name} must be configured when the Resend mailer is enabled.");
             }
         }
+
+        if ($this->app->isProduction()) {
+            $secret = config('email.webhook.secret');
+            $url = config('email.webhook.url');
+
+            if (! is_string($secret) || ! str_starts_with($secret, 'whsec_')) {
+                throw new RuntimeException('RESEND_WEBHOOK_SECRET must be configured in production.');
+            }
+
+            if (! is_string($url) || ! str_starts_with($url, 'https://')) {
+                throw new RuntimeException('RESEND_WEBHOOK_URL must use HTTPS in production.');
+            }
+        }
     }
 
     private function configureRateLimiting(): void
@@ -157,5 +170,9 @@ class AppServiceProvider extends ServiceProvider
                     ->by('refresh:token:'.$tokenHash),
             ];
         });
+
+        RateLimiter::for('webhooks', fn (Request $request) => Limit::perMinute(
+            config('rate_limiting.webhooks_per_minute'),
+        )->by('webhooks:'.($request->ip() ?? 'unknown')));
     }
 }
