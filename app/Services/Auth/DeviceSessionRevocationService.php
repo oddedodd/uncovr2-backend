@@ -3,6 +3,7 @@
 namespace App\Services\Auth;
 
 use App\Models\DeviceSession;
+use App\Models\PushDevice;
 use App\Models\RefreshToken;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -69,6 +70,8 @@ final class DeviceSessionRevocationService
         DB::table('personal_access_tokens')
             ->where('device_session_id', $session->getKey())
             ->delete();
+
+        PushDevice::query()->where('device_session_id', $session->getKey())->whereNull('disabled_at')->update(['disabled_at' => $now]);
 
         if ($session->web_session_id !== null && config('session.driver') === 'database') {
             DB::table(config('session.table'))

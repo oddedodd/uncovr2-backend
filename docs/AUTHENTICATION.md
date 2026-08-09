@@ -6,6 +6,30 @@ private PostgreSQL database used by Laravel.
 
 ## Client flows
 
+### Registration and required consent
+
+`POST /api/v1/auth/register` requires `display_name`, email, password and a
+strict `consents` object. `terms` and `privacy` must be accepted; optional
+`marketing_email` and `marketing_push` booleans are recorded independently.
+Laravel assigns the configured policy versions, hashes the request IP for the
+consent audit trail and never treats marketing consent as permission to suppress
+required account or security email.
+
+```json
+{
+  "display_name": "Ada Listener",
+  "email": "ada@example.com",
+  "password": "a sufficiently long passphrase",
+  "password_confirmation": "a sufficiently long passphrase",
+  "consents": {
+    "terms": true,
+    "privacy": true,
+    "marketing_email": false,
+    "marketing_push": false
+  }
+}
+```
+
 ### Login endpoint
 
 Both clients use `POST /api/v1/auth/login` with normalized email, password,

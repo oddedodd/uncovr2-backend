@@ -19,6 +19,11 @@ final class RegisterRequest extends FormRequest
             'display_name' => ['required', 'string', 'min:2', 'max:100'],
             'email' => ['required', 'string', 'email:rfc', 'max:254'],
             'password' => ['required', 'string', Password::min(15), 'max:255', 'confirmed'],
+            'consents' => ['required', 'array:terms,privacy,marketing_email,marketing_push'],
+            'consents.terms' => ['required', 'accepted'],
+            'consents.privacy' => ['required', 'accepted'],
+            'consents.marketing_email' => ['sometimes', 'boolean'],
+            'consents.marketing_push' => ['sometimes', 'boolean'],
         ];
     }
 

@@ -21,6 +21,7 @@ class AuthenticationEndToEndTest extends TestCase
             'email' => 'ADA@EXAMPLE.COM',
             'password' => $password,
             'password_confirmation' => $password,
+            'consents' => ['terms' => true, 'privacy' => true],
         ]), [
             'message' => 'If the address can be registered, a verification email will be sent.',
         ], 202);

@@ -21,6 +21,7 @@ class RegistrationTest extends TestCase
             'email' => '  ADA@Example.com ',
             'password' => self::PASSWORD,
             'password_confirmation' => self::PASSWORD,
+            'consents' => ['terms' => true, 'privacy' => true, 'marketing_email' => false],
         ]);
 
         $this->assertApiSuccess($response, [
@@ -36,6 +37,9 @@ class RegistrationTest extends TestCase
         $this->assertNotEmpty($user->public_id);
         $this->assertDatabaseCount('personal_access_tokens', 0);
         $this->assertDatabaseCount('device_sessions', 0);
+        $this->assertDatabaseHas('consent_records', ['user_id' => $user->id, 'purpose' => 'terms', 'granted' => true]);
+        $this->assertDatabaseHas('consent_records', ['user_id' => $user->id, 'purpose' => 'privacy', 'granted' => true]);
+        $this->assertDatabaseHas('consent_records', ['user_id' => $user->id, 'purpose' => 'marketing_email', 'granted' => false]);
 
         Notification::assertSentTo(
             $user,
@@ -54,6 +58,7 @@ class RegistrationTest extends TestCase
             'email' => ' ARTIST@EXAMPLE.COM ',
             'password' => self::PASSWORD,
             'password_confirmation' => self::PASSWORD,
+            'consents' => ['terms' => true, 'privacy' => true],
         ];
 
         $response = $this->postApi('/auth/register', $payload);

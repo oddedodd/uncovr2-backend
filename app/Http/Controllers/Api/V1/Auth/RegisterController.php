@@ -7,6 +7,7 @@ use App\Http\Requests\Api\V1\Auth\RegisterRequest;
 use App\Http\Responses\ApiResponse;
 use App\Models\User;
 use App\Services\Auth\SecurityAuditLogger;
+use App\Services\Privacy\ConsentRecorder;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
@@ -14,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 final class RegisterController extends Controller
 {
-    public function __construct(private readonly SecurityAuditLogger $auditLogger) {}
+    public function __construct(private readonly SecurityAuditLogger $auditLogger, private readonly ConsentRecorder $consents) {}
 
     public function __invoke(RegisterRequest $request): JsonResponse
     {
@@ -35,6 +36,7 @@ final class RegisterController extends Controller
                 $user->profile()->create([
                     'display_name' => $request->string('display_name')->toString(),
                 ]);
+                $this->consents->recordRegistration($user, $request);
 
                 return $user;
             });

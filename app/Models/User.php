@@ -47,6 +47,51 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(ArtistMembership::class);
     }
 
+    public function artistFollows(): HasMany
+    {
+        return $this->hasMany(ArtistFollow::class);
+    }
+
+    public function releaseFavorites(): HasMany
+    {
+        return $this->hasMany(ReleaseFavorite::class);
+    }
+
+    public function trackFavorites(): HasMany
+    {
+        return $this->hasMany(TrackFavorite::class);
+    }
+
+    public function listenerCollections(): HasMany
+    {
+        return $this->hasMany(ListenerCollection::class);
+    }
+
+    public function notificationPreferences(): HasMany
+    {
+        return $this->hasMany(NotificationPreference::class);
+    }
+
+    public function pushDevices(): HasMany
+    {
+        return $this->hasMany(PushDevice::class);
+    }
+
+    public function listenerNotifications(): HasMany
+    {
+        return $this->hasMany(ListenerNotification::class);
+    }
+
+    public function consentRecords(): HasMany
+    {
+        return $this->hasMany(ConsentRecord::class);
+    }
+
+    public function accountDeletionRequest(): HasOne
+    {
+        return $this->hasOne(AccountDeletionRequest::class);
+    }
+
     public function sendEmailVerificationNotification(): void
     {
         DB::transaction(function (): void {
@@ -89,6 +134,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'email_verification_version' => 'integer',
             'is_superadmin' => 'boolean',
+            'deletion_requested_at' => 'immutable_datetime',
+            'anonymized_at' => 'immutable_datetime',
             'password' => 'hashed',
         ];
     }

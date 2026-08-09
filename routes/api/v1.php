@@ -16,6 +16,11 @@ use App\Http\Controllers\Api\V1\ContributorController;
 use App\Http\Controllers\Api\V1\CreditController;
 use App\Http\Controllers\Api\V1\DeviceSessionController;
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Controllers\Api\V1\ListenerCollectionController;
+use App\Http\Controllers\Api\V1\ListenerInsightsController;
+use App\Http\Controllers\Api\V1\ListenerLibraryController;
+use App\Http\Controllers\Api\V1\ListenerNotificationController;
+use App\Http\Controllers\Api\V1\ListenerPreferenceController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\MediaController;
 use App\Http\Controllers\Api\V1\MediaUploadController;
@@ -24,7 +29,9 @@ use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\OrganizationInvitationController;
 use App\Http\Controllers\Api\V1\OrganizationMembershipController;
 use App\Http\Controllers\Api\V1\PageController;
+use App\Http\Controllers\Api\V1\PrivacyController;
 use App\Http\Controllers\Api\V1\PublicCatalogController;
+use App\Http\Controllers\Api\V1\PushDeviceController;
 use App\Http\Controllers\Api\V1\ReleaseActivityController;
 use App\Http\Controllers\Api\V1\ReleaseArtistController;
 use App\Http\Controllers\Api\V1\ReleaseController;
@@ -32,6 +39,7 @@ use App\Http\Controllers\Api\V1\ReleaseEditorController;
 use App\Http\Controllers\Api\V1\ReleasePublicationController;
 use App\Http\Controllers\Api\V1\StreamingLinkController;
 use App\Http\Controllers\Api\V1\TrackController;
+use App\Http\Middleware\PreventPrivateResponseCaching;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Support\Facades\Route;
 
@@ -82,7 +90,7 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
         ->name('verify-email');
 });
 
-Route::middleware(['auth:sanctum', 'active-device-session', 'throttle:authenticated'])
+Route::middleware(['auth:sanctum', 'active-device-session', 'throttle:authenticated', PreventPrivateResponseCaching::class])
     ->group(function (): void {
         Route::post('/auth/logout', LogoutController::class)->name('auth.logout');
         Route::post('/auth/logout-all', LogoutAllController::class)->name('auth.logout-all');
@@ -94,11 +102,41 @@ Route::middleware(['auth:sanctum', 'active-device-session', 'throttle:authentica
         Route::delete('/me/sessions/{deviceSession}', [DeviceSessionController::class, 'destroy'])
             ->name('me.sessions.destroy');
 
+        Route::get('/me/follows/artists', [ListenerLibraryController::class, 'followedArtists'])->name('me.follows.artists.index');
+        Route::put('/me/follows/artists/{artist}', [ListenerLibraryController::class, 'followArtist'])->name('me.follows.artists.store');
+        Route::delete('/me/follows/artists/{artist}', [ListenerLibraryController::class, 'unfollowArtist'])->name('me.follows.artists.destroy');
+        Route::get('/me/favorites/releases', [ListenerLibraryController::class, 'favoriteReleases'])->name('me.favorites.releases.index');
+        Route::put('/me/favorites/releases/{release}', [ListenerLibraryController::class, 'favoriteRelease'])->name('me.favorites.releases.store');
+        Route::delete('/me/favorites/releases/{release}', [ListenerLibraryController::class, 'unfavoriteRelease'])->name('me.favorites.releases.destroy');
+        Route::get('/me/favorites/tracks', [ListenerLibraryController::class, 'favoriteTracks'])->name('me.favorites.tracks.index');
+        Route::put('/me/favorites/tracks/{track}', [ListenerLibraryController::class, 'favoriteTrack'])->name('me.favorites.tracks.store');
+        Route::delete('/me/favorites/tracks/{track}', [ListenerLibraryController::class, 'unfavoriteTrack'])->name('me.favorites.tracks.destroy');
+        Route::get('/me/collections', [ListenerCollectionController::class, 'index'])->name('me.collections.index');
+        Route::post('/me/collections', [ListenerCollectionController::class, 'store'])->name('me.collections.store');
+        Route::get('/me/collections/{collection}', [ListenerCollectionController::class, 'show'])->name('me.collections.show');
+        Route::patch('/me/collections/{collection}', [ListenerCollectionController::class, 'update'])->name('me.collections.update');
+        Route::delete('/me/collections/{collection}', [ListenerCollectionController::class, 'destroy'])->name('me.collections.destroy');
+        Route::put('/me/collections/{collection}/items', [ListenerCollectionController::class, 'replaceItems'])->name('me.collections.items.replace');
+        Route::get('/me/notification-preferences', [ListenerPreferenceController::class, 'index'])->name('me.notification-preferences.index');
+        Route::put('/me/notification-preferences/{topic}', [ListenerPreferenceController::class, 'update'])->name('me.notification-preferences.update');
+        Route::put('/me/push-devices/{deviceSession}', [PushDeviceController::class, 'upsert'])->name('me.push-devices.upsert');
+        Route::delete('/me/push-devices/{pushDevice}', [PushDeviceController::class, 'destroy'])->name('me.push-devices.destroy');
+        Route::get('/me/notifications', [ListenerNotificationController::class, 'index'])->name('me.notifications.index');
+        Route::patch('/me/notifications/read-all', [ListenerNotificationController::class, 'readAll'])->name('me.notifications.read-all');
+        Route::patch('/me/notifications/{notification}/read', [ListenerNotificationController::class, 'read'])->name('me.notifications.read');
+        Route::get('/me/privacy/consents', [PrivacyController::class, 'consents'])->name('me.privacy.consents.index');
+        Route::post('/me/privacy/consents', [PrivacyController::class, 'recordConsent'])->name('me.privacy.consents.store');
+        Route::get('/me/privacy/export', [PrivacyController::class, 'export'])->name('me.privacy.export');
+        Route::get('/me/privacy/deletion', [PrivacyController::class, 'deletionStatus'])->name('me.privacy.deletion.show');
+        Route::post('/me/privacy/deletion', [PrivacyController::class, 'requestDeletion'])->name('me.privacy.deletion.store');
+        Route::delete('/me/privacy/deletion', [PrivacyController::class, 'cancelDeletion'])->name('me.privacy.deletion.destroy');
+
         Route::get('/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
         Route::post('/organizations', [OrganizationController::class, 'store'])->name('organizations.store');
         Route::get('/organizations/{organization}', [OrganizationController::class, 'show'])->name('organizations.show');
         Route::patch('/organizations/{organization}', [OrganizationController::class, 'update'])->name('organizations.update');
         Route::patch('/organizations/{organization}/status', [OrganizationController::class, 'updateStatus'])->name('organizations.status.update');
+        Route::get('/organizations/{organization}/listener-insights', [ListenerInsightsController::class, 'organization'])->name('organizations.listener-insights.show');
         Route::get('/organizations/{organization}/members', [OrganizationMembershipController::class, 'index'])->name('organizations.members.index');
         Route::patch('/organizations/{organization}/members/{membership}', [OrganizationMembershipController::class, 'update'])->name('organizations.members.update');
         Route::delete('/organizations/{organization}/members/{membership}', [OrganizationMembershipController::class, 'destroy'])->name('organizations.members.destroy');
@@ -111,6 +149,7 @@ Route::middleware(['auth:sanctum', 'active-device-session', 'throttle:authentica
         Route::get('/artists/{artist}', [ArtistController::class, 'show'])->name('artists.show');
         Route::patch('/artists/{artist}', [ArtistController::class, 'update'])->name('artists.update');
         Route::patch('/artists/{artist}/status', [ArtistController::class, 'updateStatus'])->name('artists.status.update');
+        Route::get('/artists/{artist}/listener-insights', [ListenerInsightsController::class, 'artist'])->name('artists.listener-insights.show');
         Route::get('/artists/{artist}/members', [ArtistMembershipController::class, 'index'])->name('artists.members.index');
         Route::post('/artists/{artist}/members', [ArtistMembershipController::class, 'store'])->name('artists.members.store');
         Route::patch('/artists/{artist}/members/{membership}', [ArtistMembershipController::class, 'update'])->name('artists.members.update');

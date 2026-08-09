@@ -27,3 +27,7 @@ Schedule::command('releases:dispatch-scheduled')
 Schedule::command('media:prune-uploads')
     ->hourly()
     ->withoutOverlapping();
+
+Schedule::command('privacy:process-account-deletions')
+    ->daily()
+    ->withoutOverlapping();

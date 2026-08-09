@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['organization_id', 'artist_id', 'type', 'status', 'title', 'subtitle', 'description', 'release_date', 'upc', 'cover_media_id', 'created_by_user_id', 'updated_by_user_id', 'submitted_at', 'approved_at', 'approved_by_user_id', 'approved_fingerprint', 'scheduled_for', 'published_at', 'published_by_user_id', 'unpublished_at', 'archived_at', 'publication_version', 'featured_at'])]
@@ -96,6 +97,11 @@ class Release extends Model
     public function publications(): HasMany
     {
         return $this->hasMany(ReleasePublication::class);
+    }
+
+    public function activePublication(): HasOne
+    {
+        return $this->hasOne(ReleasePublication::class)->whereNull('withdrawn_at');
     }
 
     public function ownerType(): string

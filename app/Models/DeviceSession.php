@@ -40,6 +40,11 @@ class DeviceSession extends Model
         return $this->hasMany(RefreshToken::class);
     }
 
+    public function pushDevices(): HasMany
+    {
+        return $this->hasMany(PushDevice::class);
+    }
+
     /** @return array<string, string> */
     protected function casts(): array
     {

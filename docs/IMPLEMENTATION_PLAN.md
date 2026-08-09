@@ -211,20 +211,21 @@ is maintained in the portal repository.
 
 ## B7 — Listener domain, privacy and notifications
 
-This backend work may begin after the portal gate, immediately before Expo work.
+This work was explicitly advanced after the portal foundation was completed.
+The complete portal-to-mobile gate still remains required before Expo work.
 
-- [ ] `B7.1` Implement unique artist follows.
-- [ ] `B7.2` Implement unique release and track favorites.
-- [ ] `B7.3` Implement private collections and ordered collection items.
-- [ ] `B7.4` Implement notification preferences by channel and topic, keeping
+- [x] `B7.1` Implement unique artist follows.
+- [x] `B7.2` Implement unique release and track favorites.
+- [x] `B7.3` Implement private collections and ordered collection items.
+- [x] `B7.4` Implement notification preferences by channel and topic, keeping
   required account/security email separate from optional marketing consent.
-- [ ] `B7.5` Register devices and deactivate push tokens on logout or deletion.
-- [ ] `B7.6` Create an in-app notification model and paginated endpoint.
-- [ ] `B7.7` Implement user data export.
-- [ ] `B7.8` Implement documented account deletion and retention workflow.
-- [ ] `B7.9` Record required consent without mixing operational and marketing messages.
-- [ ] `B7.10` Expose only aggregate follow and favorite statistics to labels and artists.
-- [ ] `B7.11` Test that one listener can never read another listener's private data.
+- [x] `B7.5` Register devices and deactivate push tokens on logout or deletion.
+- [x] `B7.6` Create an in-app notification model and paginated endpoint.
+- [x] `B7.7` Implement user data export.
+- [x] `B7.8` Implement documented account deletion and retention workflow.
+- [x] `B7.9` Record required consent without mixing operational and marketing messages.
+- [x] `B7.10` Expose only aggregate follow and favorite statistics to labels and artists.
+- [x] `B7.11` Test that one listener can never read another listener's private data.
 
 ## B8 — Operations and backend release readiness
 
