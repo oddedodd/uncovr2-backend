@@ -27,6 +27,7 @@ Backend conventions are documented in:
 - [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md)
 - [docs/OPERATIONS_RUNBOOK.md](docs/OPERATIONS_RUNBOOK.md)
 - [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md)
+- [docs/RELEASE_READINESS_EVIDENCE.md](docs/RELEASE_READINESS_EVIDENCE.md)
 
 Work should proceed from the first unchecked task in the active milestone. A
 phase gate must be satisfied before work starts on the next product surface.

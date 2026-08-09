@@ -230,30 +230,30 @@ The complete portal-to-mobile gate still remains required before Expo work.
 ## B8 — Operations and backend release readiness
 
 - [x] `B8.1` Configure production queues, retries and failed-job handling.
-- [ ] `B8.2` Make Resend transactional email production-ready.
-  - [ ] `B8.2a` Configure scoped production credentials, verified sending
+- [x] `B8.2` Make Resend transactional email production-ready.
+  - [x] `B8.2a` Configure scoped production credentials, verified sending
     subdomain, SPF, DKIM, DMARC, sender identities and secret rotation.
-  - [ ] `B8.2b` Receive Resend delivery webhooks over HTTPS and verify the raw
+  - [x] `B8.2b` Receive Resend delivery webhooks over HTTPS and verify the raw
     request signature before processing any event.
-  - [ ] `B8.2c` Make webhook processing idempotent using `svix-id` and tolerate
+  - [x] `B8.2c` Make webhook processing idempotent using `svix-id` and tolerate
     duplicate and out-of-order delivery.
-  - [ ] `B8.2d` Store only necessary provider message IDs and delivery state;
+  - [x] `B8.2d` Store only necessary provider message IDs and delivery state;
     handle delivered, bounced, complained, suppressed and failed outcomes.
-  - [ ] `B8.2e` Add metrics and alerts for queue failures, provider errors and
+  - [x] `B8.2e` Add metrics and alerts for queue failures, provider errors and
     abnormal bounce or complaint rates without logging email bodies or secrets.
-  - [ ] `B8.2f` Test valid, invalid, replayed, duplicate and out-of-order webhooks,
+  - [x] `B8.2f` Test valid, invalid, replayed, duplicate and out-of-order webhooks,
     then run a documented production-like delivery and bounce smoke test.
-- [ ] `B8.3` Add error monitoring and production-safe logging.
-- [ ] `B8.4` Document backup, restore and incident procedures.
-- [ ] `B8.5` Add database security and performance checks to release procedure.
-- [ ] `B8.6` Publish machine-readable API documentation.
-- [ ] `B8.7` Seed a deterministic demo label, users, artists and release.
-- [ ] `B8.8` Run the complete test suite against a production-like environment.
+- [x] `B8.3` Add error monitoring and production-safe logging.
+- [x] `B8.4` Document backup, restore and incident procedures.
+- [x] `B8.5` Add database security and performance checks to release procedure.
+- [x] `B8.6` Publish machine-readable API documentation.
+- [x] `B8.7` Seed a deterministic demo label, users, artists and release.
+- [x] `B8.8` Run the complete test suite against a production-like environment.
 
 ## Backend release-readiness gate
 
-- [ ] The backend-to-portal gate remains satisfied.
-- [ ] Listener-domain privacy, synchronization and notification behavior in B7 is tested.
-- [ ] Database, queue, email, storage and monitoring integrations are documented.
-- [ ] Resend domain authentication, queued sending, idempotency, signed webhooks,
+- [x] The backend-to-portal gate remains satisfied.
+- [x] Listener-domain privacy, synchronization and notification behavior in B7 is tested.
+- [x] Database, queue, email, storage and monitoring integrations are documented.
+- [x] Resend domain authentication, queued sending, idempotency, signed webhooks,
   bounce handling and alerting have passed a production-like verification.
