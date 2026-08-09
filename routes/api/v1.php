@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\ArtistController;
+use App\Http\Controllers\Api\V1\ArtistInvitationController;
 use App\Http\Controllers\Api\V1\ArtistMembershipController;
 use App\Http\Controllers\Api\V1\Auth\ForgotPasswordController;
 use App\Http\Controllers\Api\V1\Auth\LoginController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\Api\V1\ListenerPreferenceController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\MediaController;
 use App\Http\Controllers\Api\V1\MediaUploadController;
+use App\Http\Controllers\Api\V1\OnboardingController;
 use App\Http\Controllers\Api\V1\OrganizationArtistController;
 use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\OrganizationInvitationController;
@@ -140,6 +142,7 @@ Route::middleware(['auth:sanctum', 'active-device-session', 'throttle:authentica
         Route::delete('/me/privacy/deletion', [PrivacyController::class, 'cancelDeletion'])->name('me.privacy.deletion.destroy');
 
         Route::get('/platform/overview', [PlatformController::class, 'overview'])->name('platform.overview');
+        Route::post('/platform/organization-onboardings', [OnboardingController::class, 'organization'])->name('platform.organization-onboardings.store');
 
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
@@ -157,6 +160,7 @@ Route::middleware(['auth:sanctum', 'active-device-session', 'throttle:authentica
         Route::patch('/organizations/{organization}/members/{membership}', [OrganizationMembershipController::class, 'update'])->name('organizations.members.update');
         Route::delete('/organizations/{organization}/members/{membership}', [OrganizationMembershipController::class, 'destroy'])->name('organizations.members.destroy');
         Route::post('/organizations/{organization}/invitations', [OrganizationInvitationController::class, 'store'])->name('organizations.invitations.store');
+        Route::post('/organizations/{organization}/artist-onboardings', [OnboardingController::class, 'artist'])->name('organizations.artist-onboardings.store');
         Route::post('/organization-invitations/{invitation}/resend', [OrganizationInvitationController::class, 'resend'])->name('organization-invitations.resend');
         Route::post('/organization-invitations/accept', [OrganizationInvitationController::class, 'accept'])->name('organization-invitations.accept');
 
@@ -170,6 +174,9 @@ Route::middleware(['auth:sanctum', 'active-device-session', 'throttle:authentica
         Route::post('/artists/{artist}/members', [ArtistMembershipController::class, 'store'])->name('artists.members.store');
         Route::patch('/artists/{artist}/members/{membership}', [ArtistMembershipController::class, 'update'])->name('artists.members.update');
         Route::delete('/artists/{artist}/members/{membership}', [ArtistMembershipController::class, 'destroy'])->name('artists.members.destroy');
+        Route::post('/artists/{artist}/invitations', [ArtistInvitationController::class, 'store'])->name('artists.invitations.store');
+        Route::post('/artist-invitations/{invitation}/resend', [ArtistInvitationController::class, 'resend'])->name('artist-invitations.resend');
+        Route::post('/artist-invitations/accept', [ArtistInvitationController::class, 'accept'])->name('artist-invitations.accept');
 
         Route::post('/organizations/{organization}/artists', [OrganizationArtistController::class, 'store'])->name('organizations.artists.store');
         Route::delete('/organizations/{organization}/artists/{relationship}', [OrganizationArtistController::class, 'destroy'])->name('organizations.artists.destroy');

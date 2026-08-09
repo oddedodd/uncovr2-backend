@@ -147,6 +147,66 @@ class OpenApiGenerator
     /** @return array<string, mixed> */
     private function requestSchema(string $name): array
     {
+        if (str_ends_with($name, 'platform.organization-onboardings.store')) {
+            return [
+                'type' => 'object',
+                'additionalProperties' => false,
+                'required' => ['organization', 'administrator', 'confirmation'],
+                'properties' => [
+                    'organization' => [
+                        'type' => 'object',
+                        'additionalProperties' => false,
+                        'required' => ['name'],
+                        'properties' => [
+                            'name' => ['type' => 'string', 'minLength' => 2, 'maxLength' => 150],
+                            'legal_name' => ['type' => ['string', 'null'], 'maxLength' => 200],
+                            'description' => ['type' => ['string', 'null'], 'maxLength' => 5000],
+                            'website_url' => ['type' => ['string', 'null'], 'format' => 'uri'],
+                        ],
+                    ],
+                    'administrator' => $this->administratorSchema(),
+                    'confirmation' => ['type' => 'boolean', 'const' => true],
+                ],
+            ];
+        }
+
+        if (str_ends_with($name, 'organizations.artist-onboardings.store')) {
+            return [
+                'type' => 'object',
+                'additionalProperties' => false,
+                'required' => ['artist', 'administrator', 'confirmation'],
+                'properties' => [
+                    'artist' => [
+                        'type' => 'object',
+                        'additionalProperties' => false,
+                        'required' => ['name'],
+                        'properties' => [
+                            'name' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 150],
+                            'biography' => ['type' => ['string', 'null'], 'maxLength' => 10000],
+                            'website_url' => ['type' => ['string', 'null'], 'format' => 'uri'],
+                        ],
+                    ],
+                    'administrator' => $this->administratorSchema(),
+                    'relationship_type' => ['type' => 'string', 'enum' => ['managing_label', 'distributor'], 'default' => 'managing_label'],
+                    'creator_role' => ['type' => ['string', 'null'], 'enum' => ['artist_admin', 'artist_user', null]],
+                    'confirmation' => ['type' => 'boolean', 'const' => true],
+                ],
+            ];
+        }
+
+        if (str_ends_with($name, 'artists.invitations.store')) {
+            return $this->invitationSchema(['artist_admin', 'artist_user']);
+        }
+
+        if (str_ends_with($name, 'artist-invitations.accept')) {
+            return [
+                'type' => 'object',
+                'additionalProperties' => false,
+                'required' => ['token'],
+                'properties' => ['token' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64]],
+            ];
+        }
+
         if (str_ends_with($name, 'users.status.update')) {
             return [
                 'type' => 'object',
@@ -169,6 +229,34 @@ class OpenApiGenerator
         }
 
         return ['$ref' => '#/components/schemas/JsonObject'];
+    }
+
+    /** @return array<string, mixed> */
+    private function administratorSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'additionalProperties' => false,
+            'required' => ['email'],
+            'properties' => ['email' => ['type' => 'string', 'format' => 'email', 'maxLength' => 254]],
+        ];
+    }
+
+    /**
+     * @param  list<string>  $roles
+     * @return array<string, mixed>
+     */
+    private function invitationSchema(array $roles): array
+    {
+        return [
+            'type' => 'object',
+            'additionalProperties' => false,
+            'required' => ['email', 'role'],
+            'properties' => [
+                'email' => ['type' => 'string', 'format' => 'email', 'maxLength' => 254],
+                'role' => ['type' => 'string', 'enum' => $roles],
+            ],
+        ];
     }
 
     /**

@@ -26,6 +26,11 @@ class Artist extends Model
         return $this->hasMany(ArtistMembership::class);
     }
 
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(ArtistInvitation::class);
+    }
+
     public function organizationRelationships(): HasMany
     {
         return $this->hasMany(OrganizationArtistRelationship::class);

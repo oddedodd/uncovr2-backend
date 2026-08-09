@@ -65,7 +65,8 @@ class CheckReleaseReadiness extends Command
     {
         $required = [
             'users', 'jobs', 'failed_jobs', 'organizations', 'artists', 'releases',
-            'release_publications', 'email_deliveries', 'email_webhook_events',
+            'organization_invitations', 'artist_invitations', 'release_publications',
+            'email_deliveries', 'email_webhook_events',
         ];
         $missing = array_values(array_filter($required, fn (string $table): bool => ! Schema::hasTable($table)));
 

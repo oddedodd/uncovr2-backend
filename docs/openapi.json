@@ -40,6 +40,130 @@
                 }
             }
         },
+        "/api/v1/artist-invitations/accept": {
+            "post": {
+                "operationId": "api_v1_artist-invitations_accept",
+                "tags": [
+                    "Artist Invitations"
+                ],
+                "summary": "Artist Invitations Accept",
+                "parameters": [],
+                "responses": {
+                    "201": {
+                        "description": "Successful response"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "token"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "string",
+                                        "minLength": 64,
+                                        "maxLength": 64
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/artist-invitations/{invitation}/resend": {
+            "post": {
+                "operationId": "api_v1_artist-invitations_resend",
+                "tags": [
+                    "Artist Invitations"
+                ],
+                "summary": "Artist Invitations Resend",
+                "parameters": [
+                    {
+                        "name": "invitation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successful response"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/JsonObject"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/artists": {
             "get": {
                 "operationId": "api_v1_artists_index",
@@ -286,6 +410,86 @@
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/JsonObject"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/artists/{artist}/invitations": {
+            "post": {
+                "operationId": "api_v1_artists_invitations_store",
+                "tags": [
+                    "Artists"
+                ],
+                "summary": "Artists Invitations Store",
+                "parameters": [
+                    {
+                        "name": "artist",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successful response"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "email",
+                                    "role"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 254
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "artist_admin",
+                                            "artist_user"
+                                        ]
+                                    }
+                                }
                             }
                         }
                     }
@@ -3865,6 +4069,140 @@
                 }
             }
         },
+        "/api/v1/organizations/{organization}/artist-onboardings": {
+            "post": {
+                "operationId": "api_v1_organizations_artist-onboardings_store",
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "Organizations Artist Onboardings Store",
+                "parameters": [
+                    {
+                        "name": "organization",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successful response"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "artist",
+                                    "administrator",
+                                    "confirmation"
+                                ],
+                                "properties": {
+                                    "artist": {
+                                        "type": "object",
+                                        "additionalProperties": false,
+                                        "required": [
+                                            "name"
+                                        ],
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 150
+                                            },
+                                            "biography": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 10000
+                                            },
+                                            "website_url": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "format": "uri"
+                                            }
+                                        }
+                                    },
+                                    "administrator": {
+                                        "type": "object",
+                                        "additionalProperties": false,
+                                        "required": [
+                                            "email"
+                                        ],
+                                        "properties": {
+                                            "email": {
+                                                "type": "string",
+                                                "format": "email",
+                                                "maxLength": 254
+                                            }
+                                        }
+                                    },
+                                    "relationship_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "managing_label",
+                                            "distributor"
+                                        ],
+                                        "default": "managing_label"
+                                    },
+                                    "creator_role": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "enum": [
+                                            "artist_admin",
+                                            "artist_user",
+                                            null
+                                        ]
+                                    },
+                                    "confirmation": {
+                                        "type": "boolean",
+                                        "const": true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/organizations/{organization}/artists": {
             "post": {
                 "operationId": "api_v1_organizations_artists_store",
@@ -4689,6 +5027,119 @@
                         "cookieAuth": []
                     }
                 ]
+            }
+        },
+        "/api/v1/platform/organization-onboardings": {
+            "post": {
+                "operationId": "api_v1_platform_organization-onboardings_store",
+                "tags": [
+                    "Platform"
+                ],
+                "summary": "Platform Organization Onboardings Store",
+                "parameters": [],
+                "responses": {
+                    "201": {
+                        "description": "Successful response"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "organization",
+                                    "administrator",
+                                    "confirmation"
+                                ],
+                                "properties": {
+                                    "organization": {
+                                        "type": "object",
+                                        "additionalProperties": false,
+                                        "required": [
+                                            "name"
+                                        ],
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "minLength": 2,
+                                                "maxLength": 150
+                                            },
+                                            "legal_name": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 200
+                                            },
+                                            "description": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 5000
+                                            },
+                                            "website_url": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "format": "uri"
+                                            }
+                                        }
+                                    },
+                                    "administrator": {
+                                        "type": "object",
+                                        "additionalProperties": false,
+                                        "required": [
+                                            "email"
+                                        ],
+                                        "properties": {
+                                            "email": {
+                                                "type": "string",
+                                                "format": "email",
+                                                "maxLength": 254
+                                            }
+                                        }
+                                    },
+                                    "confirmation": {
+                                        "type": "boolean",
+                                        "const": true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/v1/platform/overview": {

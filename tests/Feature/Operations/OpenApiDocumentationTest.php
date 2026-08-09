@@ -15,6 +15,14 @@ class OpenApiDocumentationTest extends TestCase
 
         $document = json_decode((string) file_get_contents(base_path('docs/openapi.json')), true, flags: JSON_THROW_ON_ERROR);
         $this->assertSame('3.1.0', $document['openapi']);
+        $this->assertSame(
+            ['organization', 'administrator', 'confirmation'],
+            $document['paths']['/api/v1/platform/organization-onboardings']['post']['requestBody']['content']['application/json']['schema']['required'],
+        );
+        $this->assertSame(
+            ['artist_admin', 'artist_user'],
+            $document['paths']['/api/v1/artists/{artist}/invitations']['post']['requestBody']['content']['application/json']['schema']['properties']['role']['enum'],
+        );
 
         collect(RouteFacade::getRoutes()->getRoutes())
             ->filter(fn (Route $route): bool => str_starts_with($route->uri(), 'api/v1'))

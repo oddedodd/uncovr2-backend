@@ -253,6 +253,9 @@ The complete portal-to-mobile gate still remains required before Expo work.
   users, organizations, artists and releases.
 - [x] `B8.10` Add superadmin platform overview, user hierarchy, account
   suspension and audited role-correction contracts required by portal P2.
+- [x] `B8.11` Add transactional label and artist onboarding contracts required
+  by portal P3, including first-administrator invitations, artist acceptance,
+  label relationships and explicit-only creator artist roles.
 
 ## Backend release-readiness gate
 
@@ -261,3 +264,5 @@ The complete portal-to-mobile gate still remains required before Expo work.
 - [x] Database, queue, email, storage and monitoring integrations are documented.
 - [x] Resend domain authentication, queued sending, idempotency, signed webhooks,
   bounce handling and alerting have passed a production-like verification.
+- [x] Label and artist onboarding are transactional, invitation acceptance is
+  email-bound and single-use, and implicit artist-role assignment is disabled.
