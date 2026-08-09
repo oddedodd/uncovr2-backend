@@ -13,10 +13,10 @@ class CorsAndSecurityTest extends TestCase
 {
     public function test_an_allowed_portal_origin_receives_credentialed_cors_headers(): void
     {
-        $this->withHeader('Origin', 'http://localhost:3000')
+        $this->withHeader('Origin', 'http://localhost:5173')
             ->getJson('/api/v1')
             ->assertOk()
-            ->assertHeader('Access-Control-Allow-Origin', 'http://localhost:3000')
+            ->assertHeader('Access-Control-Allow-Origin', 'http://localhost:5173')
             ->assertHeader('Access-Control-Allow-Credentials', 'true')
             ->assertHeader('Access-Control-Expose-Headers', 'X-Request-ID');
     }
@@ -36,12 +36,12 @@ class CorsAndSecurityTest extends TestCase
     public function test_allowed_preflight_requests_are_handled_without_calling_the_endpoint(): void
     {
         $this->call('OPTIONS', '/api/v1', server: [
-            'HTTP_ORIGIN' => 'http://localhost:3000',
+            'HTTP_ORIGIN' => 'http://localhost:5173',
             'HTTP_ACCESS_CONTROL_REQUEST_METHOD' => 'POST',
             'HTTP_ACCESS_CONTROL_REQUEST_HEADERS' => 'Content-Type, X-Request-ID',
         ])
             ->assertNoContent()
-            ->assertHeader('Access-Control-Allow-Origin', 'http://localhost:3000')
+            ->assertHeader('Access-Control-Allow-Origin', 'http://localhost:5173')
             ->assertHeader('Access-Control-Allow-Credentials', 'true')
             ->assertHeader('Access-Control-Max-Age', '600');
     }

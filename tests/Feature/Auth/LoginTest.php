@@ -94,8 +94,8 @@ class LoginTest extends TestCase
         ]);
 
         $response = $this
-            ->withHeader('Origin', 'http://localhost:3000')
-            ->withHeader('Referer', 'http://localhost:3000/login')
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->withHeader('Referer', 'http://localhost:5173/login')
             ->postApi('/auth/login', $payload);
 
         $response

@@ -135,7 +135,7 @@ class PasswordResetTest extends TestCase
         $this->assertSame([60, 300, 900], $notification->backoff());
         $this->assertSame('mail.auth.reset-password', $message->view['html']);
         $this->assertSame('mail.auth.reset-password-text', $message->view['text']);
-        $this->assertStringStartsWith('http://localhost:3000/reset-password?', $message->viewData['resetUrl']);
+        $this->assertStringStartsWith('http://localhost:5173/reset-password?', $message->viewData['resetUrl']);
         $this->assertStringContainsString(urlencode($plainToken), $message->viewData['resetUrl']);
         $this->assertStringContainsString(urlencode($user->email), $message->viewData['resetUrl']);
 

@@ -40,6 +40,7 @@ use App\Http\Controllers\Api\V1\ReleasePublicationController;
 use App\Http\Controllers\Api\V1\ResendWebhookController;
 use App\Http\Controllers\Api\V1\StreamingLinkController;
 use App\Http\Controllers\Api\V1\TrackController;
+use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Middleware\PreventPrivateResponseCaching;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Support\Facades\Route;
@@ -135,6 +136,8 @@ Route::middleware(['auth:sanctum', 'active-device-session', 'throttle:authentica
         Route::get('/me/privacy/deletion', [PrivacyController::class, 'deletionStatus'])->name('me.privacy.deletion.show');
         Route::post('/me/privacy/deletion', [PrivacyController::class, 'requestDeletion'])->name('me.privacy.deletion.store');
         Route::delete('/me/privacy/deletion', [PrivacyController::class, 'cancelDeletion'])->name('me.privacy.deletion.destroy');
+
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
 
         Route::get('/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
         Route::post('/organizations', [OrganizationController::class, 'store'])->name('organizations.store');

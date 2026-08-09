@@ -3,13 +3,13 @@
 Laravel API for Uncovr 2.0, a platform for interactive digital music releases.
 
 Laravel owns authentication, authorization and domain logic. PostgreSQL and
-object storage are hosted by Supabase. The future Next.js portal and Expo app
+object storage are hosted by Supabase. The React portal and future Expo app
 will communicate with this API instead of accessing the database directly.
 
 ## Product surfaces
 
 - Laravel API: identity, access control, organizations, artists, releases and publishing.
-- Next.js portal: working interface for superadmins, labels and artists.
+- React portal: working interface for superadmins, labels and artists.
 - Expo app: listener experience, intentionally deferred until the portal workflow is complete.
 
 ## Development roadmap

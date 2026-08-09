@@ -4,42 +4,23 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\MembershipStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\ReleaseIndexRequest;
 use App\Http\Requests\Api\V1\Releases\StoreReleaseRequest;
 use App\Http\Requests\Api\V1\Releases\UpdateReleaseRequest;
 use App\Http\Resources\ReleaseResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Release;
+use App\Services\Api\CursorPagination;
 use App\Services\Releases\ReleaseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\Cursor;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
 
 final class ReleaseController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(ReleaseIndexRequest $request, CursorPagination $pagination): JsonResponse
     {
-        if (array_diff(array_keys($request->query()), ['page'])) {
-            throw ValidationException::withMessages(['query' => ['The query contains unsupported parameters.']]);
-        }
-        Validator::make($request->query(), [
-            'page' => ['sometimes', 'array:size,after,before'],
-            'page.size' => ['sometimes', 'integer', 'between:1,100'],
-            'page.after' => ['sometimes', 'string'],
-            'page.before' => ['sometimes', 'string'],
-        ])->validate();
-        if ($request->has('page.after') && $request->has('page.before')) {
-            throw ValidationException::withMessages(['page' => ['The after and before cursors are mutually exclusive.']]);
-        }
-        $size = (int) $request->input('page.size', 25);
-        $encodedCursor = $request->input('page.after', $request->input('page.before'));
-        $cursor = is_string($encodedCursor) ? Cursor::fromEncoded($encodedCursor) : null;
-        if (is_string($encodedCursor) && ! $cursor) {
-            throw ValidationException::withMessages(['page' => ['The pagination cursor is invalid.']]);
-        }
-        $query = Release::query()->with($this->includes())->orderByDesc('created_at')->orderByDesc('public_id');
+        $query = Release::query()->with($this->includes())->orderByDesc('public_id');
         if (! $request->user()->is_superadmin) {
             $userId = $request->user()->getKey();
             $query->where(function ($owners) use ($userId): void {
@@ -51,9 +32,35 @@ final class ReleaseController extends Controller
                     }));
             });
         }
-        $page = $query->cursorPaginate($size, cursor: $cursor);
 
-        return ApiResponse::success(collect($page->items())->map(fn ($release) => (new ReleaseResource($release))->resolve())->all(), meta: ['pagination' => ['per_page' => $page->perPage(), 'next_cursor' => $page->nextCursor()?->encode(), 'previous_cursor' => $page->previousCursor()?->encode(), 'has_more' => $page->hasMorePages()]]);
+        if ($request->filled('filter.status')) {
+            $query->where('status', $request->string('filter.status')->toString());
+        }
+
+        if ($request->filled('filter.type')) {
+            $query->where('type', $request->string('filter.type')->toString());
+        }
+
+        if ($request->filled('filter.search')) {
+            $pattern = '%'.trim($request->string('filter.search')->toString()).'%';
+            $query->where(function ($search) use ($pattern): void {
+                $search->whereLike('public_id', $pattern)
+                    ->orWhereLike('title', $pattern)
+                    ->orWhereLike('subtitle', $pattern)
+                    ->orWhereLike('upc', $pattern)
+                    ->orWhereHas('artistLinks.artist.profile', fn ($profile) => $profile->whereLike('name', $pattern))
+                    ->orWhereHas('organization.profile', fn ($profile) => $profile->whereLike('name', $pattern))
+                    ->orWhereHas('ownerArtist.profile', fn ($profile) => $profile->whereLike('name', $pattern));
+            });
+        }
+
+        $payload = $pagination->paginate(
+            $query,
+            $request,
+            fn (Release $release): array => (new ReleaseResource($release))->resolve($request),
+        );
+
+        return response()->json($payload);
     }
 
     public function store(StoreReleaseRequest $request, ReleaseService $service): JsonResponse

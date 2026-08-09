@@ -15,7 +15,7 @@ if (app()->isLocal()) {
 
     Route::view('/dev/mail/reset-password', 'mail.auth.reset-password', [
         'displayName' => 'Ada Artist',
-        'resetUrl' => 'http://localhost:3000/reset-password?token=example&email=ada@example.com',
+        'resetUrl' => 'http://localhost:5173/reset-password?token=example&email=ada@example.com',
         'expiresInMinutes' => 60,
     ])->name('dev.mail.reset-password');
 }

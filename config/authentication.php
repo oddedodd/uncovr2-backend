@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'portal_url' => env('PORTAL_URL', 'http://localhost:3000'),
+    'portal_url' => env('PORTAL_URL', 'http://localhost:5173'),
 
     'access_token_ttl_minutes' => max(
         5,

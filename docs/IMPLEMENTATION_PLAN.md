@@ -202,12 +202,12 @@ is maintained in the portal repository.
 
 ## Backend-to-portal gate
 
-- [ ] Superadmin can create or approve a label and inspect its hierarchy through the API.
-- [ ] Label Admin can manage team members and create an artist.
-- [ ] Artist Admin can manage its team and create a release.
-- [ ] A release can progress from draft to published.
-- [ ] Unauthorized and cross-tenant API operations are rejected and tested.
-- [ ] Portal-required API contracts and local Sanctum behavior are documented and stable.
+- [x] Superadmin can create or approve a label and inspect its hierarchy through the API.
+- [x] Label Admin can manage team members and create an artist.
+- [x] Artist Admin can manage its team and create a release.
+- [x] A release can progress from draft to published.
+- [x] Unauthorized and cross-tenant API operations are rejected and tested.
+- [x] Portal-required API contracts and local Sanctum behavior are documented and stable.
 
 ## B7 — Listener domain, privacy and notifications
 
@@ -249,6 +249,8 @@ The complete portal-to-mobile gate still remains required before Expo work.
 - [x] `B8.6` Publish machine-readable API documentation.
 - [x] `B8.7` Seed a deterministic demo label, users, artists and release.
 - [x] `B8.8` Run the complete test suite against a production-like environment.
+- [x] `B8.9` Add protected, scope-aware and cursor-paginated portal search for
+  users, organizations, artists and releases.
 
 ## Backend release-readiness gate
 

@@ -54,7 +54,7 @@ The response always includes the user's public ID and the new device session's
 public ID; internal database IDs are never exposed. Authentication responses
 disable caching.
 
-### Next.js portal
+### React portal
 
 The portal uses Laravel's stateful session cookie with CSRF protection. It never
 receives an access token or refresh token in JavaScript, and authentication
@@ -62,7 +62,7 @@ secrets must not be stored in local storage. The cookie is HTTP-only, secure in
 production and SameSite Lax.
 
 The portal and API must be deployed below the same registrable domain, for
-example `app.uncovr.no` and `api.uncovr.no`. Login regenerates the Laravel
+example `admin.uncovr.no` and `api.uncovr.no`. Login regenerates the Laravel
 session ID. Portal sessions have a 120-minute idle timeout and a 12-hour
 absolute lifetime; there is no remember-me flow in the MVP.
 
@@ -177,8 +177,11 @@ Authenticated portal sessions and mobile bearer tokens use the same endpoints:
 - `POST /api/v1/auth/logout` revokes the current device session.
 - `POST /api/v1/auth/logout-all` revokes every portal and mobile session owned
   by the account.
-- `GET /api/v1/me` returns the account's public ID, verified email and minimal
-  profile; `PATCH /api/v1/me` currently changes only `display_name`.
+- `GET /api/v1/me` returns the account's public ID, verified email, minimal
+  profile, superadmin flag and its organization/artist workspaces with current
+  role and membership status. This is the portal's role-aware navigation
+  contract; Laravel Policies still authorize every operation. `PATCH /api/v1/me`
+  currently changes only `display_name` and returns the same context.
 - `GET /api/v1/me/sessions` lists active sessions and identifies the current
   one; `DELETE /api/v1/me/sessions/{public_id}` revokes an owned session.
 
@@ -231,3 +234,15 @@ only through Laravel's direct PostgreSQL connection. Supabase `anon`,
 Production configures exact `SANCTUM_STATEFUL_DOMAINS`, CORS origins, session
 cookie domain and the documented token lifetimes. Automated tests use isolated
 SQLite and never create real browser or mobile sessions in Supabase.
+
+The exact browser settings are:
+
+| Environment | Portal | API | Stateful domain | Session domain |
+| --- | --- | --- | --- | --- |
+| Local | `http://localhost:5173` | `http://localhost:8000` | `localhost:5173` | `null` |
+| Production | `https://admin.uncovr.no` | `https://api.uncovr.no` | `admin.uncovr.no` | `.uncovr.no` |
+
+Production also sets `SESSION_SECURE_COOKIE=true`, `SESSION_HTTP_ONLY=true`
+and `SESSION_SAME_SITE=lax`. Local development uses a non-secure cookie and
+must consistently use `localhost` for both processes; `127.0.0.1` is not a
+supported portal origin.

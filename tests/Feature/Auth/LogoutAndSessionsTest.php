@@ -125,14 +125,14 @@ class LogoutAndSessionsTest extends TestCase
             'device' => ['name' => 'Safari on Mac', 'platform' => 'macos'],
         ];
 
-        $this->withHeader('Origin', 'http://localhost:3000')
-            ->withHeader('Referer', 'http://localhost:3000/login')
+        $this->withHeader('Origin', 'http://localhost:5173')
+            ->withHeader('Referer', 'http://localhost:5173/login')
             ->postApi('/auth/login', $payload)
             ->assertOk();
         $this->assertAuthenticatedAs($user, 'web');
 
-        $this->withHeader('Origin', 'http://localhost:3000')
-            ->withHeader('Referer', 'http://localhost:3000/account')
+        $this->withHeader('Origin', 'http://localhost:5173')
+            ->withHeader('Referer', 'http://localhost:5173/account')
             ->postApi('/auth/logout')
             ->assertOk();
 
@@ -152,15 +152,15 @@ class LogoutAndSessionsTest extends TestCase
             'client_type' => 'portal',
             'device' => ['name' => 'Safari on Mac', 'platform' => 'macos'],
         ];
-        $this->withHeader('Origin', 'http://localhost:3000')
-            ->withHeader('Referer', 'http://localhost:3000/login')
+        $this->withHeader('Origin', 'http://localhost:5173')
+            ->withHeader('Referer', 'http://localhost:5173/login')
             ->postApi('/auth/login', $payload)
             ->assertOk();
         $session = DeviceSession::query()->sole();
         $session->forceFill(['absolute_expires_at' => now()->subSecond()])->save();
 
-        $this->withHeader('Origin', 'http://localhost:3000')
-            ->withHeader('Referer', 'http://localhost:3000/account')
+        $this->withHeader('Origin', 'http://localhost:5173')
+            ->withHeader('Referer', 'http://localhost:5173/account')
             ->getApi('/me')
             ->assertUnauthorized();
 

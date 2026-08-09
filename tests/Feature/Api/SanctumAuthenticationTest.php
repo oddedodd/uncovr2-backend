@@ -25,7 +25,7 @@ class SanctumAuthenticationTest extends TestCase
         $apiMiddleware = app(Router::class)->getMiddlewareGroups()['api'];
 
         $this->assertContains(EnsureFrontendRequestsAreStateful::class, $apiMiddleware);
-        $this->assertContains('localhost:3000', config('sanctum.stateful'));
+        $this->assertContains('localhost:5173', config('sanctum.stateful'));
         $this->assertSame(['web'], config('sanctum.guard'));
         $this->assertSame('uncovr_', config('sanctum.token_prefix'));
     }

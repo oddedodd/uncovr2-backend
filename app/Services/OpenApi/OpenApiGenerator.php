@@ -71,12 +71,15 @@ class OpenApiGenerator
             'operationId' => str_replace('.', '_', $name),
             'tags' => [$this->tag($path)],
             'summary' => str($name)->after('api.v1.')->replace('.', ' ')->headline()->toString(),
-            'parameters' => array_map(fn (string $parameter): array => [
-                'name' => $parameter,
-                'in' => 'path',
-                'required' => true,
-                'schema' => ['type' => 'string'],
-            ], $matches[1]),
+            'parameters' => [
+                ...array_map(fn (string $parameter): array => [
+                    'name' => $parameter,
+                    'in' => 'path',
+                    'required' => true,
+                    'schema' => ['type' => 'string'],
+                ], $matches[1]),
+                ...$this->queryParameters($name, $method),
+            ],
             'responses' => $this->responses($method, $authenticated),
         ];
 
@@ -92,6 +95,52 @@ class OpenApiGenerator
         }
 
         return $operation;
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function queryParameters(string $name, string $method): array
+    {
+        if ($method !== 'get') {
+            return [];
+        }
+
+        $filters = match (true) {
+            str_ends_with($name, 'users.index') => [
+                $this->queryParameter('filter[search]', ['type' => 'string', 'minLength' => 2, 'maxLength' => 100]),
+            ],
+            str_ends_with($name, 'organizations.index'), str_ends_with($name, 'artists.index') => [
+                $this->queryParameter('filter[search]', ['type' => 'string', 'minLength' => 2, 'maxLength' => 100]),
+                $this->queryParameter('filter[status]', ['type' => 'string', 'enum' => ['active', 'suspended']]),
+            ],
+            str_ends_with($name, 'releases.index') && ! str_contains($name, '.public.') => [
+                $this->queryParameter('filter[search]', ['type' => 'string', 'minLength' => 2, 'maxLength' => 100]),
+                $this->queryParameter('filter[status]', ['type' => 'string', 'enum' => ['draft', 'review', 'scheduled', 'published', 'unpublished', 'archived']]),
+                $this->queryParameter('filter[type]', ['type' => 'string', 'enum' => ['album', 'ep', 'single']]),
+            ],
+            default => [],
+        };
+
+        if ($filters === []) {
+            return [];
+        }
+
+        return [
+            ...$filters,
+            $this->queryParameter('page[size]', ['type' => 'integer', 'minimum' => 1, 'maximum' => 100, 'default' => 25]),
+            $this->queryParameter('page[after]', ['type' => 'string']),
+            $this->queryParameter('page[before]', ['type' => 'string']),
+        ];
+    }
+
+    /** @param array<string, mixed> $schema */
+    private function queryParameter(string $name, array $schema): array
+    {
+        return [
+            'name' => $name,
+            'in' => 'query',
+            'required' => false,
+            'schema' => $schema,
+        ];
     }
 
     /** @return array<string, mixed> */
