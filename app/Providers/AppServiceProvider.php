@@ -57,6 +57,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureResendTransport();
         $this->configureRateLimiting();
         $this->validateEmailConfiguration();
+        $this->validateQueueConfiguration();
 
         if ($this->app->isProduction()) {
             URL::forceScheme('https');
@@ -70,6 +71,24 @@ class AppServiceProvider extends ServiceProvider
 
             return new ResendTransport(\Resend::client($key));
         });
+    }
+
+    private function validateQueueConfiguration(): void
+    {
+        if (config('queue.default') !== 'database') {
+            return;
+        }
+
+        $retryAfter = (int) config('queue.connections.database.retry_after');
+        $timeout = (int) config('queue.worker.timeout');
+
+        if ($retryAfter <= $timeout) {
+            throw new RuntimeException('DB_QUEUE_RETRY_AFTER must be greater than QUEUE_WORKER_TIMEOUT.');
+        }
+
+        if ($this->app->isProduction() && config('queue.failed.driver') !== 'database-uuids') {
+            throw new RuntimeException('Production queue failures must use the database-uuids driver.');
+        }
     }
 
     private function validateEmailConfiguration(): void

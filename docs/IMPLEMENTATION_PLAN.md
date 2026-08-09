@@ -229,7 +229,7 @@ The complete portal-to-mobile gate still remains required before Expo work.
 
 ## B8 — Operations and backend release readiness
 
-- [ ] `B8.1` Configure production queues, retries and failed-job handling.
+- [x] `B8.1` Configure production queues, retries and failed-job handling.
 - [ ] `B8.2` Make Resend transactional email production-ready.
   - [ ] `B8.2a` Configure scoped production credentials, verified sending
     subdomain, SPF, DKIM, DMARC, sender identities and secret rotation.

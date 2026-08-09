@@ -29,10 +29,12 @@ must use separate `sending_access` keys restricted to `mail.uncovr.no`. The
 controlled real-delivery check and its environment-specific key belong to
 `B2.14`, not the automated B2.5 test suite.
 
-Run a worker for transactional mail:
+The production worker contract is documented in
+[`QUEUE_OPERATIONS.md`](QUEUE_OPERATIONS.md). To process only transactional mail
+during local diagnosis, run:
 
 ```bash
-php artisan queue:work --queue=emails --tries=3
+php artisan queue:work database --queue=emails --tries=3 --timeout=120
 ```
 
 Mail is queued only after its database transaction commits. Retry delays are

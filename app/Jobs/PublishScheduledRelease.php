@@ -17,9 +17,19 @@ final class PublishScheduledRelease implements ShouldBeUnique, ShouldQueue
 
     public array $backoff = [60, 300, 900];
 
+    public int $maxExceptions = 3;
+
+    public int $timeout = 120;
+
+    public bool $failOnTimeout = true;
+
     public int $uniqueFor = 3600;
 
-    public function __construct(public readonly int $releaseId, public readonly int $actorId) {}
+    public function __construct(public readonly int $releaseId, public readonly int $actorId)
+    {
+        $this->afterCommit();
+        $this->onQueue(config('queue.channels.publishing'));
+    }
 
     public function uniqueId(): string
     {

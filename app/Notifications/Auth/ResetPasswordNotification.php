@@ -16,6 +16,12 @@ final class ResetPasswordNotification extends Notification implements ShouldQueu
 
     public int $tries = 3;
 
+    public int $maxExceptions = 3;
+
+    public int $timeout = 60;
+
+    public bool $failOnTimeout = true;
+
     public readonly string $encryptedToken;
 
     public readonly string $tokenFingerprint;

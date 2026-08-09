@@ -22,6 +22,7 @@ Backend conventions are documented in:
 - [docs/API_CONVENTIONS.md](docs/API_CONVENTIONS.md)
 - [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md)
 - [docs/IDENTIFIERS.md](docs/IDENTIFIERS.md)
+- [docs/QUEUE_OPERATIONS.md](docs/QUEUE_OPERATIONS.md)
 
 Work should proceed from the first unchecked task in the active milestone. A
 phase gate must be satisfied before work starts on the next product surface.

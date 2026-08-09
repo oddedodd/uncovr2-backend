@@ -17,6 +17,12 @@ final class VerifyEmailNotification extends VerifyEmail implements ShouldQueue
 
     public int $tries = 3;
 
+    public int $maxExceptions = 3;
+
+    public int $timeout = 60;
+
+    public bool $failOnTimeout = true;
+
     public function __construct(public readonly int $version)
     {
         $this->afterCommit();

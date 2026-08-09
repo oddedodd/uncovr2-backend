@@ -40,8 +40,8 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
-            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
-            'after_commit' => false,
+            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 180),
+            'after_commit' => (bool) env('QUEUE_AFTER_COMMIT', true),
         ],
 
         'beanstalkd' => [
@@ -103,7 +103,7 @@ return [
     */
 
     'batching' => [
-        'database' => env('DB_CONNECTION', 'sqlite'),
+        'database' => env('DB_QUEUE_CONNECTION', env('DB_CONNECTION', 'sqlite')),
         'table' => 'job_batches',
     ],
 
@@ -122,8 +122,40 @@ return [
 
     'failed' => [
         'driver' => env('QUEUE_FAILED_DRIVER', 'database-uuids'),
-        'database' => env('DB_CONNECTION', 'sqlite'),
+        'database' => env('DB_QUEUE_CONNECTION', env('DB_CONNECTION', 'sqlite')),
         'table' => 'failed_jobs',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Uncovr Queue Operations
+    |--------------------------------------------------------------------------
+    |
+    | These values define the production worker contract. The process manager
+    | must use the same timeout and queue order. retry_after must always be
+    | greater than the worker timeout so a running job cannot be claimed twice.
+    |
+    */
+
+    'channels' => [
+        'emails' => env('MAIL_QUEUE', 'emails'),
+        'publishing' => env('PUBLISHING_QUEUE', 'publishing'),
+        'default' => env('DB_QUEUE', 'default'),
+    ],
+
+    'worker' => [
+        'queues' => env('QUEUE_WORKER_QUEUES', 'emails,publishing,default'),
+        'sleep' => (int) env('QUEUE_WORKER_SLEEP', 3),
+        'tries' => (int) env('QUEUE_WORKER_TRIES', 3),
+        'timeout' => (int) env('QUEUE_WORKER_TIMEOUT', 120),
+        'max_time' => (int) env('QUEUE_WORKER_MAX_TIME', 3600),
+        'memory' => (int) env('QUEUE_WORKER_MEMORY', 256),
+    ],
+
+    'monitoring' => [
+        'max_jobs' => (int) env('QUEUE_MONITOR_MAX_JOBS', 100),
+        'failed_retention_hours' => (int) env('QUEUE_FAILED_RETENTION_HOURS', 720),
+        'batch_retention_hours' => (int) env('QUEUE_BATCH_RETENTION_HOURS', 168),
     ],
 
 ];

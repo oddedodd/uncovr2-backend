@@ -16,6 +16,12 @@ final class OrganizationInvitationNotification extends Notification implements S
 
     public int $tries = 3;
 
+    public int $maxExceptions = 3;
+
+    public int $timeout = 60;
+
+    public bool $failOnTimeout = true;
+
     public function __construct(public readonly string $plainToken)
     {
         $this->afterCommit();
