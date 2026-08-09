@@ -4,6 +4,7 @@ namespace Tests\Feature\Domain;
 
 use App\Enums\OrganizationRole;
 use App\Models\ContentBlock;
+use App\Models\Media;
 use App\Models\Release;
 use Tests\Feature\Domain\Concerns\BuildsReleaseDomain;
 use Tests\TestCase;
@@ -85,6 +86,9 @@ class CompleteDraftReleaseTest extends TestCase
 
     private function createMedia(string $ownerId, string $filename, string $kind = 'image', string $mime = 'image/jpeg'): string
     {
-        return $this->postApi('/media', ['owner_type' => 'organization', 'owner_id' => $ownerId, 'kind' => $kind, 'original_filename' => $filename, 'mime_type' => $mime, 'byte_size' => 1024, 'width' => $kind === 'image' ? 1200 : null, 'height' => $kind === 'image' ? 1200 : null, 'metadata' => null])->assertCreated()->json('data.id');
+        $id = $this->postApi('/media', ['owner_type' => 'organization', 'owner_id' => $ownerId, 'kind' => $kind, 'original_filename' => $filename, 'mime_type' => $mime, 'byte_size' => 1024, 'width' => $kind === 'image' ? 1200 : null, 'height' => $kind === 'image' ? 1200 : null, 'metadata' => null])->assertCreated()->json('data.id');
+        Media::query()->where('public_id', $id)->update(['status' => 'ready', 'verified_at' => now()]);
+
+        return $id;
     }
 }

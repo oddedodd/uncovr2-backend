@@ -80,7 +80,7 @@ final class LoginController extends Controller
             $data = $this->loginService->mobile($user, $request, $request->array('device'));
         }
 
-        $this->auditLogger->record(
+        $this->auditLogger->recordAfterResponse(
             'auth.login_succeeded',
             $user,
             $request,

@@ -23,6 +23,24 @@ class OpenApiDocumentationTest extends TestCase
             ['artist_admin', 'artist_user'],
             $document['paths']['/api/v1/artists/{artist}/invitations']['post']['requestBody']['content']['application/json']['schema']['properties']['role']['enum'],
         );
+        $this->assertArrayHasKey(
+            'logo_media_id',
+            $document['paths']['/api/v1/organizations/{organization}']['patch']['requestBody']['content']['application/json']['schema']['properties'],
+        );
+        $this->assertArrayHasKey(
+            'image_media_id',
+            $document['paths']['/api/v1/artists/{artist}']['patch']['requestBody']['content']['application/json']['schema']['properties'],
+        );
+        $this->assertArrayHasKey(
+            'cover_media_id',
+            $document['paths']['/api/v1/releases']['post']['requestBody']['content']['application/json']['schema']['properties'],
+        );
+        $this->assertSame(
+            100,
+            $document['paths']['/api/v1/media/downloads']['post']['requestBody']['content']['application/json']['schema']['properties']['media_ids']['maxItems'],
+        );
+        $this->assertArrayHasKey('200', $document['paths']['/api/v1/media/downloads']['post']['responses']);
+        $this->assertArrayNotHasKey('201', $document['paths']['/api/v1/media/downloads']['post']['responses']);
 
         collect(RouteFacade::getRoutes()->getRoutes())
             ->filter(fn (Route $route): bool => str_starts_with($route->uri(), 'api/v1'))

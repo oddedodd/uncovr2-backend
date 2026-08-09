@@ -50,6 +50,15 @@ final class MediaController extends Controller
         if ($media->releasesAsCover()->exists()) {
             throw ValidationException::withMessages(['media' => ['Media used as a release cover cannot be deleted.']]);
         }
+        if ($media->organizationProfilesAsLogo()->exists()) {
+            throw ValidationException::withMessages(['media' => ['Media used as a label logo cannot be deleted.']]);
+        }
+        if ($media->artistProfilesAsLogo()->exists()) {
+            throw ValidationException::withMessages(['media' => ['Media used as an artist logo cannot be deleted.']]);
+        }
+        if ($media->artistProfilesAsImage()->exists()) {
+            throw ValidationException::withMessages(['media' => ['Media used as an artist image cannot be deleted.']]);
+        }
         $driver = ContentBlock::query()->getConnection()->getDriverName();
         $payloadExpression = $driver === 'pgsql' ? 'payload::text' : 'payload';
         if (ContentBlock::query()->whereRaw("{$payloadExpression} LIKE ?", ['%'.$media->public_id.'%'])->exists()) {

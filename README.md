@@ -23,6 +23,7 @@ Backend conventions are documented in:
 - [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md)
 - [docs/AUTHORIZATION.md](docs/AUTHORIZATION.md)
 - [docs/IDENTIFIERS.md](docs/IDENTIFIERS.md)
+- [docs/MEDIA_AND_PUBLISHING.md](docs/MEDIA_AND_PUBLISHING.md)
 - [docs/ONBOARDING_API.md](docs/ONBOARDING_API.md)
 - [docs/PLATFORM_ADMINISTRATION_API.md](docs/PLATFORM_ADMINISTRATION_API.md)
 - [docs/QUEUE_OPERATIONS.md](docs/QUEUE_OPERATIONS.md)

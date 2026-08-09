@@ -25,6 +25,11 @@ final class ArtistPolicy
         return $this->access->canManageArtist($user, $artist);
     }
 
+    public function manageMedia(User $user, Artist $artist): bool
+    {
+        return $this->access->canManageArtist($user, $artist);
+    }
+
     public function suspend(User $user, Artist $artist): bool
     {
         return false;

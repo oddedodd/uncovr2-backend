@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\Auth\SecurityAuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 final class MeController extends Controller
 {
@@ -16,7 +17,7 @@ final class MeController extends Controller
 
     public function show(Request $request): JsonResponse
     {
-        return ApiResponse::success($this->resource($this->loadContext($request->user())));
+        return ApiResponse::success($this->resource($request->user()->loadMissing('profile')));
     }
 
     public function update(UpdateMeRequest $request): JsonResponse
@@ -27,7 +28,19 @@ final class MeController extends Controller
         ]);
         $this->auditLogger->record('account.profile_updated', $user, $request);
 
-        return ApiResponse::success($this->resource($this->loadContext($user)));
+        return ApiResponse::success($this->resource($user->load('profile')));
+    }
+
+    public function workspaces(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $cacheKey = "users:{$user->getKey()}:workspaces:v1";
+
+        return ApiResponse::success([
+            'workspaces' => Cache::remember($cacheKey, now()->addSeconds(60), fn (): array => $this->buildWorkspaces(
+                $this->loadContext(User::query()->findOrFail($user->getKey())),
+            )),
+        ]);
     }
 
     /** @return array<string, mixed> */
@@ -41,7 +54,6 @@ final class MeController extends Controller
             'profile' => [
                 'display_name' => $user->profile?->display_name,
             ],
-            'workspaces' => $this->workspaces($user),
         ];
     }
 
@@ -55,7 +67,7 @@ final class MeController extends Controller
     }
 
     /** @return array<int, array<string, string>> */
-    private function workspaces(User $user): array
+    private function buildWorkspaces(User $user): array
     {
         $workspaces = collect();
 

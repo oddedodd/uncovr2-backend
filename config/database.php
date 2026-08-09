@@ -97,6 +97,10 @@ return [
             'prefix_indexes' => true,
             'search_path' => env('DB_SCHEMA', 'laravel'),
             'sslmode' => env('DB_SSLMODE', 'require'),
+            'options' => extension_loaded('pdo_pgsql') ? array_filter([
+                PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', false),
+                PDO::ATTR_EMULATE_PREPARES => env('DB_EMULATE_PREPARES'),
+            ], fn ($value): bool => $value !== null && $value !== false) : [],
         ],
 
         'sqlsrv' => [

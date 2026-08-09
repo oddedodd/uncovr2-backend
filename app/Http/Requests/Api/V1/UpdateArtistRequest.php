@@ -10,6 +10,8 @@ final class UpdateArtistRequest extends StrictFormRequest
             'name' => ['sometimes', 'string', 'min:1', 'max:150'],
             'biography' => ['sometimes', 'nullable', 'string', 'max:10000'],
             'website_url' => ['sometimes', 'nullable', 'url:http,https', 'max:2048'],
+            'logo_media_id' => ['sometimes', 'nullable', 'ulid'],
+            'image_media_id' => ['sometimes', 'nullable', 'ulid'],
         ];
     }
 }

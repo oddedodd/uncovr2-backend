@@ -24,6 +24,9 @@ final class ReleaseResource extends JsonResource
             'subtitle' => $this->subtitle, 'description' => $this->description,
             'release_date' => $this->release_date?->format('Y-m-d'), 'upc' => $this->upc,
             'cover_media_id' => $this->coverMedia?->public_id,
+            'cover_media' => $this->coverMedia
+                ? (new MediaReferenceResource($this->coverMedia))->resolve($request)
+                : null,
             'lifecycle' => [
                 'submitted_at' => $this->submitted_at?->utc()->format('Y-m-d\TH:i:s.v\Z'),
                 'approved_at' => $this->approved_at?->utc()->format('Y-m-d\TH:i:s.v\Z'),

@@ -37,6 +37,11 @@ final class FakeMediaStorage implements MediaStorage
         return "https://storage.test/download/{$bucket}/{$path}?expires={$expiresIn}";
     }
 
+    public function upload(string $bucket, string $path, string $body, string $mimeType): void
+    {
+        $this->objects["{$bucket}/{$path}"] = new StoredObject($mimeType, strlen($body), $body, hash('sha256', $body));
+    }
+
     public function copy(string $sourceBucket, string $sourcePath, string $destinationBucket, string $destinationPath): void
     {
         $this->copies[] = compact('sourceBucket', 'sourcePath', 'destinationBucket', 'destinationPath');

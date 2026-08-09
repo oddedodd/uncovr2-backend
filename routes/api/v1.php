@@ -107,6 +107,7 @@ Route::middleware(['auth:sanctum', 'active-device-session', 'throttle:authentica
 
         Route::get('/me', [MeController::class, 'show'])->name('me.show');
         Route::patch('/me', [MeController::class, 'update'])->name('me.update');
+        Route::get('/me/workspaces', [MeController::class, 'workspaces'])->name('me.workspaces.index');
         Route::get('/me/sessions', [DeviceSessionController::class, 'index'])
             ->name('me.sessions.index');
         Route::delete('/me/sessions/{deviceSession}', [DeviceSessionController::class, 'destroy'])
@@ -154,6 +155,7 @@ Route::middleware(['auth:sanctum', 'active-device-session', 'throttle:authentica
         Route::post('/organizations', [OrganizationController::class, 'store'])->name('organizations.store');
         Route::get('/organizations/{organization}', [OrganizationController::class, 'show'])->name('organizations.show');
         Route::patch('/organizations/{organization}', [OrganizationController::class, 'update'])->name('organizations.update');
+        Route::post('/organizations/{organization}/logo', [OrganizationController::class, 'uploadLogo'])->name('organizations.logo.store');
         Route::patch('/organizations/{organization}/status', [OrganizationController::class, 'updateStatus'])->name('organizations.status.update');
         Route::get('/organizations/{organization}/listener-insights', [ListenerInsightsController::class, 'organization'])->name('organizations.listener-insights.show');
         Route::get('/organizations/{organization}/members', [OrganizationMembershipController::class, 'index'])->name('organizations.members.index');
@@ -168,6 +170,8 @@ Route::middleware(['auth:sanctum', 'active-device-session', 'throttle:authentica
         Route::post('/artists', [ArtistController::class, 'store'])->name('artists.store');
         Route::get('/artists/{artist}', [ArtistController::class, 'show'])->name('artists.show');
         Route::patch('/artists/{artist}', [ArtistController::class, 'update'])->name('artists.update');
+        Route::post('/artists/{artist}/logo', [ArtistController::class, 'uploadLogo'])->name('artists.logo.store');
+        Route::post('/artists/{artist}/image', [ArtistController::class, 'uploadImage'])->name('artists.image.store');
         Route::patch('/artists/{artist}/status', [ArtistController::class, 'updateStatus'])->name('artists.status.update');
         Route::get('/artists/{artist}/listener-insights', [ListenerInsightsController::class, 'artist'])->name('artists.listener-insights.show');
         Route::get('/artists/{artist}/members', [ArtistMembershipController::class, 'index'])->name('artists.members.index');
@@ -229,6 +233,7 @@ Route::middleware(['auth:sanctum', 'active-device-session', 'throttle:authentica
         Route::delete('/credits/{credit}', [CreditController::class, 'destroy'])->name('credits.destroy');
 
         Route::post('/media', [MediaController::class, 'store'])->name('media.store');
+        Route::post('/media/downloads', [MediaUploadController::class, 'downloads'])->name('media.downloads.store');
         Route::get('/media/{media}', [MediaController::class, 'show'])->name('media.show');
         Route::patch('/media/{media}', [MediaController::class, 'update'])->name('media.update');
         Route::delete('/media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');

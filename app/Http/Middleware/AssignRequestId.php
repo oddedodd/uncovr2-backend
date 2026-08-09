@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\RequestPerformanceMetrics;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +17,8 @@ final class AssignRequestId
 
     private const STARTED_AT = '_request_started_at';
 
+    public function __construct(private readonly RequestPerformanceMetrics $metrics) {}
+
     public function handle(Request $request, Closure $next): Response
     {
         if (! $request->is('api/*')) {
@@ -27,6 +30,7 @@ final class AssignRequestId
         $request->attributes->set(self::ATTRIBUTE, $requestId);
         $request->attributes->set(self::PREVIOUS_LOG_CONTEXT, Log::sharedContext());
         $request->attributes->set(self::STARTED_AT, hrtime(true));
+        $this->metrics->reset();
 
         Log::shareContext(['request_id' => $requestId]);
 
@@ -51,6 +55,8 @@ final class AssignRequestId
                 'http_route' => $request->route()?->getName(),
                 'http_status' => $response->getStatusCode(),
                 'duration_ms' => $this->durationInMilliseconds($request),
+                ...$this->metrics->summary(),
+                'memory_peak_mb' => round(memory_get_peak_usage(true) / 1024 / 1024, 2),
             ]);
         } finally {
             $this->restoreLogContext($request);

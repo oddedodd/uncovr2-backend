@@ -12,6 +12,21 @@ they reach any configured handler. Never add request bodies, authorization
 headers, reset links, signed URLs, email bodies or raw provider payloads to log
 context. Metrics and alerts use counts, rates, event types and opaque IDs only.
 
+## Request performance fields
+
+API completion logs include `duration_ms`, `query_count`, `db_ms`,
+`slow_queries`, `storage_call_count`, `storage_ms` and `memory_peak_mb`. When
+`duration_ms` tracks `db_ms` closely, investigate database connection mode,
+network path and query count before optimizing PHP code.
+
+For Supabase-backed environments, a slow first query on every request usually
+means the PHP runtime is opening a new Postgres connection per request. Prefer
+a persistent backend close to the database, a suitable Supabase connection mode
+for the runtime, and connection reuse where the process model supports it.
+Local development can set `DB_PERSISTENT=true` for long-lived PHP processes,
+but short-lived CLI commands and some request models will still pay connection
+startup cost.
+
 ## Required production wiring
 
 - `LOG_CHANNEL=stack`, `LOG_STACK=stderr`, `LOG_LEVEL=info`;
