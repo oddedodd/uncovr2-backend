@@ -109,7 +109,7 @@ final class ArtistController extends Controller
         $uploads->uploadArtistLogo($artist, $request->file('image'), $request->user());
         $cache->invalidate();
 
-        return ApiResponse::success((new ArtistResource($artist->load(['profile.logoMedia', 'profile.imageMedia'])))->resolve(), 201);
+        return ApiResponse::success((new ArtistResource($artist))->resolve(), 201);
     }
 
     public function uploadImage(StoreProfileImageRequest $request, Artist $artist, ProfileImageUploadService $uploads, PublicCatalogCache $cache): JsonResponse
@@ -118,7 +118,7 @@ final class ArtistController extends Controller
         $uploads->uploadArtistImage($artist, $request->file('image'), $request->user());
         $cache->invalidate();
 
-        return ApiResponse::success((new ArtistResource($artist->load(['profile.logoMedia', 'profile.imageMedia'])))->resolve(), 201);
+        return ApiResponse::success((new ArtistResource($artist))->resolve(), 201);
     }
 
     public function updateStatus(UpdateScopeStatusRequest $request, Artist $artist, SecurityAuditLogger $audit, PublicCatalogCache $cache): JsonResponse

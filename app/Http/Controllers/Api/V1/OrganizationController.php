@@ -96,7 +96,7 @@ final class OrganizationController extends Controller
         $uploads->uploadOrganizationLogo($organization, $request->file('image'), $request->user());
         $cache->invalidate();
 
-        return ApiResponse::success((new OrganizationResource($organization->load('profile.logoMedia')))->resolve(), 201);
+        return ApiResponse::success((new OrganizationResource($organization))->resolve(), 201);
     }
 
     public function updateStatus(UpdateScopeStatusRequest $request, Organization $organization, SecurityAuditLogger $audit, PublicCatalogCache $cache): JsonResponse

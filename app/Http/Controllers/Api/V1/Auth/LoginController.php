@@ -24,8 +24,9 @@ final class LoginController extends Controller
     public function __invoke(LoginRequest $request): JsonResponse
     {
         $user = User::query()
-            ->with('profile')
-            ->where('email', $request->string('email')->toString())
+            ->select('users.*', 'user_profiles.display_name as profile_display_name')
+            ->leftJoin('user_profiles', 'user_profiles.user_id', '=', 'users.id')
+            ->where('users.email', $request->string('email')->toString())
             ->first();
         $password = $request->string('password')->toString();
 

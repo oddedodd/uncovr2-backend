@@ -4,11 +4,9 @@ namespace App\Services\Media;
 
 use App\Contracts\MediaStorage;
 use App\Models\Artist;
-use App\Models\ArtistProfile;
 use App\Models\Media;
 use App\Models\MediaUpload;
 use App\Models\Organization;
-use App\Models\OrganizationProfile;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -37,6 +35,8 @@ final class ProfileImageUploadService
     {
         [$body, $mimeType, $byteSize, $width, $height, $checksum] = $this->validatedImage($file);
         $bucket = config('media.private_bucket');
+        $now = now()->startOfSecond();
+        $profile = $owner->profile()->firstOrFail();
 
         $media = Media::query()->create([
             'organization_id' => $owner instanceof Organization ? $owner->getKey() : null,
@@ -60,7 +60,7 @@ final class ProfileImageUploadService
             'expected_mime_type' => $mimeType,
             'maximum_byte_size' => config('media.limits.image.bytes'),
             'requested_by_user_id' => $actor->getKey(),
-            'expires_at' => now()->addSeconds(config('media.upload_ttl_seconds')),
+            'expires_at' => $now->copy()->addSeconds(config('media.upload_ttl_seconds')),
         ]);
 
         try {
@@ -72,7 +72,7 @@ final class ProfileImageUploadService
             throw $exception;
         }
 
-        DB::transaction(function () use ($owner, $profileField, $media, $upload, $actor, $bucket, $objectKey, $mimeType, $byteSize, $width, $height, $checksum): void {
+        DB::transaction(function () use ($profile, $profileField, $media, $upload, $actor, $bucket, $objectKey, $mimeType, $byteSize, $width, $height, $checksum, $now): void {
             MediaUpload::query()
                 ->whereKey($upload->getKey())
                 ->update([
@@ -82,8 +82,8 @@ final class ProfileImageUploadService
                     'width' => $width,
                     'height' => $height,
                     'checksum_sha256' => $checksum,
-                    'verified_at' => now(),
-                    'activated_at' => now(),
+                    'verified_at' => $now,
+                    'activated_at' => $now,
                 ]);
 
             Media::query()
@@ -97,29 +97,18 @@ final class ProfileImageUploadService
                     'mime_type' => $mimeType,
                     'width' => $width,
                     'height' => $height,
-                    'verified_at' => now(),
+                    'verified_at' => $now,
                     'updated_by_user_id' => $actor->getKey(),
+                    'updated_at' => $now,
                 ]);
 
-            $profile = [
+            $profile->forceFill([
                 $profileField => $media->getKey(),
-                'updated_at' => now(),
-            ];
-
-            if ($owner instanceof Organization) {
-                OrganizationProfile::query()
-                    ->where('organization_id', $owner->getKey())
-                    ->update($profile);
-
-                return;
-            }
-
-            ArtistProfile::query()
-                ->where('artist_id', $owner->getKey())
-                ->update($profile);
+                'updated_at' => $now,
+            ])->save();
         });
 
-        return $media->forceFill([
+        $media->forceFill([
             'status' => 'ready',
             'storage_disk' => $bucket,
             'storage_key' => $objectKey,
@@ -128,9 +117,14 @@ final class ProfileImageUploadService
             'mime_type' => $mimeType,
             'width' => $width,
             'height' => $height,
-            'verified_at' => now(),
+            'verified_at' => $now,
             'updated_by_user_id' => $actor->getKey(),
         ]);
+
+        $profile->setRelation($this->mediaRelation($profileField), $media);
+        $owner->setRelation('profile', $profile);
+
+        return $media;
     }
 
     /** @return array{0: string, 1: string, 2: int, 3: int, 4: int, 5: string} */
@@ -182,6 +176,15 @@ final class ProfileImageUploadService
             'image/webp' => 'webp',
             'image/avif' => 'avif',
             default => 'bin',
+        };
+    }
+
+    private function mediaRelation(string $profileField): string
+    {
+        return match ($profileField) {
+            'logo_media_id' => 'logoMedia',
+            'image_media_id' => 'imageMedia',
+            default => throw new \InvalidArgumentException("Unsupported profile media field [{$profileField}]."),
         };
     }
 }

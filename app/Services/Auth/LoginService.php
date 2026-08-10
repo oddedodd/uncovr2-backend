@@ -148,7 +148,9 @@ final class LoginService
             'id' => $user->public_id,
             'email' => $user->email,
             'profile' => [
-                'display_name' => $user->profile?->display_name,
+                'display_name' => $user->relationLoaded('profile')
+                    ? $user->profile?->display_name
+                    : $user->getAttribute('profile_display_name'),
             ],
         ];
     }
