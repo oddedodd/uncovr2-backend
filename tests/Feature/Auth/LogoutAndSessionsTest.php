@@ -5,6 +5,7 @@ namespace Tests\Feature\Auth;
 use App\Models\DeviceSession;
 use App\Models\User;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class LogoutAndSessionsTest extends TestCase
@@ -140,6 +141,35 @@ class LogoutAndSessionsTest extends TestCase
         $session = DeviceSession::query()->sole();
         $this->assertSame('user_logout', $session->revocation_reason);
         $this->assertNotNull($session->revoked_at);
+    }
+
+    public function test_corrupt_cached_portal_device_session_falls_back_to_database(): void
+    {
+        $user = $this->user();
+        $payload = [
+            'email' => $user->email,
+            'password' => self::PASSWORD,
+            'client_type' => 'portal',
+            'device' => ['name' => 'Safari on Mac', 'platform' => 'macos'],
+        ];
+
+        $this->withHeader('Origin', 'http://localhost:5173')
+            ->withHeader('Referer', 'http://localhost:5173/login')
+            ->postApi('/auth/login', $payload)
+            ->assertOk();
+
+        $session = DeviceSession::query()->sole();
+        Cache::put(
+            'auth:portal-device-session:'.hash('sha256', $session->web_session_id),
+            (object) ['legacy_cached_model' => true],
+            now()->addMinute(),
+        );
+
+        $this->withHeader('Origin', 'http://localhost:5173')
+            ->withHeader('Referer', 'http://localhost:5173/account')
+            ->getApi('/me')
+            ->assertOk()
+            ->assertJsonPath('data.id', $user->public_id);
     }
 
     public function test_an_expired_portal_device_session_cannot_use_protected_routes(): void

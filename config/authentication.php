@@ -28,6 +28,11 @@ return [
         (int) env('AUTH_PORTAL_SESSION_ABSOLUTE_TTL_MINUTES', 720),
     ),
 
+    'portal_device_session_cache_seconds' => max(
+        0,
+        (int) env('AUTH_PORTAL_DEVICE_SESSION_CACHE_SECONDS', 30),
+    ),
+
     'refresh_token_bytes' => 32,
 
     'refresh_token_prefix' => 'uncovr_refresh_',

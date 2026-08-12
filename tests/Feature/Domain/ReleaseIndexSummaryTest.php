@@ -4,6 +4,7 @@ namespace Tests\Feature\Domain;
 
 use App\Enums\ArtistRole;
 use App\Enums\OrganizationRole;
+use Illuminate\Support\Facades\DB;
 use Tests\Feature\Domain\Concerns\BuildsReleaseDomain;
 use Tests\TestCase;
 
@@ -161,5 +162,36 @@ class ReleaseIndexSummaryTest extends TestCase
             ->assertJsonPath('data.pages.0.blocks.0.payload.text', 'Story')
             ->assertJsonPath('data.streaming_links.0.service', 'spotify')
             ->assertJsonPath('data.credits.0.contributor.display_name', 'Grace Producer');
+    }
+
+    public function test_artist_filtered_release_index_uses_a_small_fixed_query_count(): void
+    {
+        $admin = $this->domainUser('query-admin@example.com');
+        $artistUser = $this->domainUser('query-artist@example.com');
+        $organization = $this->domainOrganization($admin, 'Query Label');
+        $artist = $this->domainArtist($admin, 'Query Artist');
+        $this->addArtistMember($artist, $artistUser, ArtistRole::User);
+        $this->linkArtist($organization, $artist, $admin);
+        $release = $this->createOrganizationRelease($admin, $organization, $artist, [
+            'title' => 'Query Release',
+        ]);
+        $this->actAsDomain($artistUser);
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        $this->getApi("/releases?filter[artist_id]={$artist->public_id}&page[size]=25")
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $release->public_id)
+            ->assertJsonMissingPath('data.0.pages')
+            ->assertJsonMissingPath('data.0.streaming_links')
+            ->assertJsonMissingPath('data.0.credits');
+
+        $this->assertLessThanOrEqual(
+            4,
+            count(DB::getQueryLog()),
+            'Release index should stay at auth plus one page query and batched artists/editors queries.',
+        );
     }
 }

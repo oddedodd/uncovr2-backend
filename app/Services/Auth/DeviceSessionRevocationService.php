@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 
 final class DeviceSessionRevocationService
 {
+    public function __construct(private readonly CurrentDeviceSessionResolver $sessionResolver) {}
+
     public function revoke(DeviceSession $deviceSession, string $reason): bool
     {
         $now = now()->startOfSecond();
@@ -32,6 +34,7 @@ final class DeviceSessionRevocationService
             'updated_at' => $now,
         ]);
         $this->revokeDependents($deviceSession, $now);
+        $this->sessionResolver->forgetPortalSession($deviceSession->web_session_id);
 
         return true;
     }
@@ -71,6 +74,7 @@ final class DeviceSessionRevocationService
         ])->save();
 
         $this->revokeDependents($session, $now);
+        $this->sessionResolver->forgetPortalSession($session->web_session_id);
     }
 
     private function revokeDependents(DeviceSession $session, \DateTimeInterface $now): void

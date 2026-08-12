@@ -57,6 +57,7 @@ final class EnsureActiveDeviceSession
                     ->addMinutes(config('authentication.portal_session_idle_ttl_minutes'))
                     ->min($session->absolute_expires_at),
             ])->save();
+            $this->sessionResolver->cachePortalSession($session);
         }
 
         return $next($request);
