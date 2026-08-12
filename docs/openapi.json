@@ -1100,7 +1100,7 @@
                     }
                 ],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Successful response"
                     },
                     "401": {
@@ -1716,7 +1716,7 @@
                     }
                 ],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Successful response"
                     },
                     "401": {
@@ -1875,7 +1875,7 @@
                     }
                 ],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Successful response"
                     },
                     "401": {
@@ -2225,7 +2225,7 @@
                     }
                 ],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Successful response"
                     },
                     "401": {
@@ -2554,7 +2554,7 @@
                     }
                 ],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Successful response"
                     },
                     "401": {
@@ -2618,7 +2618,8 @@
                                             "additionalProperties": true,
                                             "required": [
                                                 "cover_media_id",
-                                                "cover_media"
+                                                "cover_media",
+                                                "pages"
                                             ],
                                             "properties": {
                                                 "cover_media_id": {
@@ -2637,6 +2638,12 @@
                                                             "type": "null"
                                                         }
                                                     ]
+                                                },
+                                                "pages": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/ReleasePage"
+                                                    }
                                                 }
                                             }
                                         }
@@ -2797,7 +2804,9 @@
                     {
                         "cookieAuth": []
                     }
-                ]
+                ],
+                "x-uncovr-contract": "legacy-track-compatibility",
+                "description": "Outside the portal release-builder contract. Retained temporarily for compatibility with the legacy listener and published-track domain."
             }
         },
         "/api/v1/me/favorites/tracks/{track}": {
@@ -2818,7 +2827,7 @@
                     }
                 ],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Successful response"
                     },
                     "401": {
@@ -2848,7 +2857,9 @@
                     {
                         "cookieAuth": []
                     }
-                ]
+                ],
+                "x-uncovr-contract": "legacy-track-compatibility",
+                "description": "Outside the portal release-builder contract. Retained temporarily for compatibility with the legacy listener and published-track domain."
             },
             "put": {
                 "operationId": "api_v1_me_favorites_tracks_store",
@@ -2898,6 +2909,8 @@
                         "cookieAuth": []
                     }
                 ],
+                "x-uncovr-contract": "legacy-track-compatibility",
+                "description": "Outside the portal release-builder contract. Retained temporarily for compatibility with the legacy listener and published-track domain.",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -3020,7 +3033,7 @@
                     }
                 ],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Successful response"
                     },
                     "401": {
@@ -3507,7 +3520,7 @@
                 "summary": "Me Privacy Deletion Destroy",
                 "parameters": [],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Successful response"
                     },
                     "401": {
@@ -3751,7 +3764,7 @@
                     }
                 ],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Successful response"
                     },
                     "401": {
@@ -3844,7 +3857,7 @@
                     }
                 ],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Successful response"
                     },
                     "401": {
@@ -4102,7 +4115,7 @@
                     }
                 ],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Successful response"
                     },
                     "401": {
@@ -5130,7 +5143,7 @@
                     }
                 ],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Successful response"
                     },
                     "401": {
@@ -5472,7 +5485,7 @@
                     }
                 ],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Successful response"
                     },
                     "401": {
@@ -5651,55 +5664,6 @@
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "Successful response"
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    },
-                    "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    },
-                    "429": {
-                        "description": "Rate limit exceeded"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    },
-                    {
-                        "cookieAuth": []
-                    }
-                ]
-            },
-            "patch": {
-                "operationId": "api_v1_pages_update",
-                "tags": [
-                    "Pages"
-                ],
-                "summary": "Pages Update",
-                "parameters": [
-                    {
-                        "name": "page",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
                     "200": {
                         "description": "Successful response"
                     },
@@ -5731,25 +5695,14 @@
                         "cookieAuth": []
                     }
                 ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/JsonObject"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/pages/{page}/blocks": {
-            "post": {
-                "operationId": "api_v1_pages_blocks_store",
+                "x-uncovr-contract": "portal-release-builder"
+            },
+            "patch": {
+                "operationId": "api_v1_pages_update",
                 "tags": [
                     "Pages"
                 ],
-                "summary": "Pages Blocks Store",
+                "summary": "Pages Update",
                 "parameters": [
                     {
                         "name": "page",
@@ -5761,8 +5714,23 @@
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Successful response"
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ReleasePage"
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -5792,12 +5760,132 @@
                         "cookieAuth": []
                     }
                 ],
+                "x-uncovr-contract": "portal-release-builder",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/JsonObject"
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "position": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "title": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 200
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/pages/{page}/blocks": {
+            "post": {
+                "operationId": "api_v1_pages_blocks_store",
+                "tags": [
+                    "Pages"
+                ],
+                "summary": "Pages Blocks Store",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ContentBlock"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "x-uncovr-contract": "portal-release-builder",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "position",
+                                    "type",
+                                    "payload"
+                                ],
+                                "properties": {
+                                    "position": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "heading",
+                                            "text",
+                                            "image",
+                                            "gallery",
+                                            "video",
+                                            "quote",
+                                            "lyrics"
+                                        ]
+                                    },
+                                    "payload": {
+                                        "type": "object",
+                                        "additionalProperties": true
+                                    }
+                                }
                             }
                         }
                     }
@@ -5830,63 +5918,6 @@
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "Successful response"
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    },
-                    "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    },
-                    "429": {
-                        "description": "Rate limit exceeded"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    },
-                    {
-                        "cookieAuth": []
-                    }
-                ]
-            },
-            "patch": {
-                "operationId": "api_v1_pages_blocks_update",
-                "tags": [
-                    "Pages"
-                ],
-                "summary": "Pages Blocks Update",
-                "parameters": [
-                    {
-                        "name": "page",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "block",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
                     "200": {
                         "description": "Successful response"
                     },
@@ -5918,12 +5949,109 @@
                         "cookieAuth": []
                     }
                 ],
+                "x-uncovr-contract": "portal-release-builder"
+            },
+            "patch": {
+                "operationId": "api_v1_pages_blocks_update",
+                "tags": [
+                    "Pages"
+                ],
+                "summary": "Pages Blocks Update",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "block",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ContentBlock"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "x-uncovr-contract": "portal-release-builder",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/JsonObject"
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "position": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "heading",
+                                            "text",
+                                            "image",
+                                            "gallery",
+                                            "video",
+                                            "quote",
+                                            "lyrics"
+                                        ]
+                                    },
+                                    "payload": {
+                                        "type": "object",
+                                        "additionalProperties": true
+                                    }
+                                }
                             }
                         }
                     }
@@ -5957,7 +6085,57 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful response"
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "required": [
+                                                    "version",
+                                                    "type",
+                                                    "payload",
+                                                    "created_at"
+                                                ],
+                                                "properties": {
+                                                    "version": {
+                                                        "type": "integer",
+                                                        "minimum": 1
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "heading",
+                                                            "text",
+                                                            "image",
+                                                            "gallery",
+                                                            "video",
+                                                            "quote",
+                                                            "lyrics"
+                                                        ]
+                                                    },
+                                                    "payload": {
+                                                        "type": "object",
+                                                        "additionalProperties": true
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -5986,7 +6164,8 @@
                     {
                         "cookieAuth": []
                     }
-                ]
+                ],
+                "x-uncovr-contract": "portal-release-builder"
             }
         },
         "/api/v1/platform/organization-onboardings": {
@@ -6479,7 +6658,9 @@
                     "429": {
                         "description": "Rate limit exceeded"
                     }
-                }
+                },
+                "x-uncovr-contract": "legacy-track-compatibility",
+                "description": "Outside the portal release-builder contract. Retained temporarily for compatibility with the legacy listener and published-track domain."
             }
         },
         "/api/v1/releases": {
@@ -6613,7 +6794,8 @@
                                             "additionalProperties": true,
                                             "required": [
                                                 "cover_media_id",
-                                                "cover_media"
+                                                "cover_media",
+                                                "pages"
                                             ],
                                             "properties": {
                                                 "cover_media_id": {
@@ -6632,6 +6814,12 @@
                                                             "type": "null"
                                                         }
                                                     ]
+                                                },
+                                                "pages": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/ReleasePage"
+                                                    }
                                                 }
                                             }
                                         }
@@ -6771,7 +6959,7 @@
                     }
                 ],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Successful response"
                     },
                     "401": {
@@ -6884,7 +7072,8 @@
                                             "additionalProperties": true,
                                             "required": [
                                                 "cover_media_id",
-                                                "cover_media"
+                                                "cover_media",
+                                                "pages"
                                             ],
                                             "properties": {
                                                 "cover_media_id": {
@@ -6903,6 +7092,12 @@
                                                             "type": "null"
                                                         }
                                                     ]
+                                                },
+                                                "pages": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/ReleasePage"
+                                                    }
                                                 }
                                             }
                                         }
@@ -7298,7 +7493,7 @@
                     }
                 ],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Successful response"
                     },
                     "401": {
@@ -7479,7 +7674,7 @@
                     }
                 ],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Successful response"
                     },
                     "401": {
@@ -7592,7 +7787,22 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "Successful response"
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ReleasePage"
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -7622,12 +7832,30 @@
                         "cookieAuth": []
                     }
                 ],
+                "x-uncovr-contract": "portal-release-builder",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/JsonObject"
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "position"
+                                ],
+                                "properties": {
+                                    "position": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "title": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 200
+                                    }
+                                }
                             }
                         }
                     }
@@ -8039,6 +8267,9 @@
                         "cookieAuth": []
                     }
                 ],
+                "x-uncovr-contract": "legacy-track-compatibility",
+                "description": "Outside the portal release-builder contract. Retained temporarily for compatibility with the legacy listener and published-track domain.",
+                "deprecated": true,
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -8077,7 +8308,7 @@
                     }
                 ],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Successful response"
                     },
                     "401": {
@@ -8107,7 +8338,10 @@
                     {
                         "cookieAuth": []
                     }
-                ]
+                ],
+                "x-uncovr-contract": "legacy-track-compatibility",
+                "description": "Outside the portal release-builder contract. Retained temporarily for compatibility with the legacy listener and published-track domain.",
+                "deprecated": true
             },
             "patch": {
                 "operationId": "api_v1_releases_tracks_update",
@@ -8165,6 +8399,9 @@
                         "cookieAuth": []
                     }
                 ],
+                "x-uncovr-contract": "legacy-track-compatibility",
+                "description": "Outside the portal release-builder contract. Retained temporarily for compatibility with the legacy listener and published-track domain.",
+                "deprecated": true,
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -8256,7 +8493,7 @@
                     }
                 ],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Successful response"
                     },
                     "401": {
@@ -8397,6 +8634,9 @@
                         "cookieAuth": []
                     }
                 ],
+                "x-uncovr-contract": "legacy-track-compatibility",
+                "description": "Outside the portal release-builder contract. Retained temporarily for compatibility with the legacy listener and published-track domain.",
+                "deprecated": true,
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -8458,6 +8698,9 @@
                         "cookieAuth": []
                     }
                 ],
+                "x-uncovr-contract": "legacy-track-compatibility",
+                "description": "Outside the portal release-builder contract. Retained temporarily for compatibility with the legacy listener and published-track domain.",
+                "deprecated": true,
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -8519,6 +8762,9 @@
                         "cookieAuth": []
                     }
                 ],
+                "x-uncovr-contract": "legacy-track-compatibility",
+                "description": "Outside the portal release-builder contract. Retained temporarily for compatibility with the legacy listener and published-track domain.",
+                "deprecated": true,
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -9035,6 +9281,104 @@
                             "integer",
                             "null"
                         ]
+                    }
+                }
+            },
+            "ContentBlock": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "id",
+                    "page_id",
+                    "position",
+                    "type",
+                    "version",
+                    "payload"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "pattern": "^[0-9A-Za-z]{26}$"
+                    },
+                    "page_id": {
+                        "type": "string",
+                        "pattern": "^[0-9A-Za-z]{26}$"
+                    },
+                    "position": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "heading",
+                            "text",
+                            "image",
+                            "gallery",
+                            "video",
+                            "quote",
+                            "lyrics"
+                        ]
+                    },
+                    "version": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "payload": {
+                        "type": "object",
+                        "additionalProperties": true
+                    }
+                }
+            },
+            "ReleasePage": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "id",
+                    "parent",
+                    "position",
+                    "title",
+                    "blocks"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "pattern": "^[0-9A-Za-z]{26}$"
+                    },
+                    "parent": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                            "type",
+                            "id"
+                        ],
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "const": "release"
+                            },
+                            "id": {
+                                "type": "string",
+                                "pattern": "^[0-9A-Za-z]{26}$"
+                            }
+                        }
+                    },
+                    "position": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "title": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 200
+                    },
+                    "blocks": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContentBlock"
+                        }
                     }
                 }
             },

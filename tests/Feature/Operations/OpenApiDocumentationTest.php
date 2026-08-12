@@ -41,6 +41,29 @@ class OpenApiDocumentationTest extends TestCase
         );
         $this->assertArrayHasKey('200', $document['paths']['/api/v1/media/downloads']['post']['responses']);
         $this->assertArrayNotHasKey('201', $document['paths']['/api/v1/media/downloads']['post']['responses']);
+        $this->assertSame(
+            'portal-release-builder',
+            $document['paths']['/api/v1/releases/{release}/pages']['post']['x-uncovr-contract'],
+        );
+        $this->assertSame(
+            'portal-release-builder',
+            $document['paths']['/api/v1/pages/{page}/blocks/{block}']['patch']['x-uncovr-contract'],
+        );
+        $this->assertSame(
+            '#/components/schemas/ReleasePage',
+            $document['paths']['/api/v1/releases/{release}/pages']['post']['responses']['201']['content']['application/json']['schema']['properties']['data']['$ref'],
+        );
+        $this->assertSame(
+            '#/components/schemas/ContentBlock',
+            $document['paths']['/api/v1/pages/{page}/blocks/{block}']['patch']['responses']['200']['content']['application/json']['schema']['properties']['data']['$ref'],
+        );
+        $this->assertArrayHasKey('200', $document['paths']['/api/v1/pages/{page}/blocks/{block}']['delete']['responses']);
+        $this->assertArrayNotHasKey('204', $document['paths']['/api/v1/pages/{page}/blocks/{block}']['delete']['responses']);
+        $this->assertTrue($document['paths']['/api/v1/releases/{release}/tracks']['post']['deprecated']);
+        $this->assertSame(
+            'legacy-track-compatibility',
+            $document['paths']['/api/v1/releases/{release}/tracks']['post']['x-uncovr-contract'],
+        );
 
         collect(RouteFacade::getRoutes()->getRoutes())
             ->filter(fn (Route $route): bool => str_starts_with($route->uri(), 'api/v1'))

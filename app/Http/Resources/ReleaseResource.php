@@ -13,7 +13,6 @@ final class ReleaseResource extends JsonResource
     {
         $this->resource->loadMissing([
             'artistLinks.artist.profile', 'editorAssignments.user.profile',
-            'tracks.pages.blocks', 'tracks.streamingLinks', 'tracks.credits.contributor',
             'pages.blocks', 'streamingLinks', 'credits.contributor', 'coverMedia',
         ]);
 
@@ -38,23 +37,14 @@ final class ReleaseResource extends JsonResource
             ],
             'artists' => $this->artistLinks->sortBy('position')->values()->map(fn ($link) => ['artist_id' => $link->artist->public_id, 'name' => $link->artist->profile->name, 'is_primary' => $link->is_primary, 'position' => $link->position])->all(),
             'editor_user_ids' => $this->editorAssignments->map(fn ($editor) => $editor->user->public_id)->all(),
-            'tracks' => $this->tracks->map(fn ($track) => $this->track($track))->all(),
-            'pages' => $this->pages->map(fn ($page) => $this->page($page))->all(),
+            'pages' => $this->pages
+                ->map(fn ($page): array => (new ReleasePageResource($page))->resolve($request))
+                ->all(),
             'streaming_links' => $this->streamingLinks->map(fn ($link) => $this->link($link))->all(),
             'credits' => $this->credits->map(fn ($credit) => $this->credit($credit))->all(),
             'created_at' => $this->created_at->utc()->format('Y-m-d\TH:i:s.v\Z'),
             'updated_at' => $this->updated_at->utc()->format('Y-m-d\TH:i:s.v\Z'),
         ];
-    }
-
-    private function track($track): array
-    {
-        return ['id' => $track->public_id, 'position' => $track->position, 'title' => $track->title, 'duration_ms' => $track->duration_ms, 'isrc' => $track->isrc, 'is_explicit' => $track->is_explicit, 'pages' => $track->pages->map(fn ($page) => $this->page($page))->all(), 'streaming_links' => $track->streamingLinks->map(fn ($link) => $this->link($link))->all(), 'credits' => $track->credits->map(fn ($credit) => $this->credit($credit))->all()];
-    }
-
-    private function page($page): array
-    {
-        return ['id' => $page->public_id, 'position' => $page->position, 'title' => $page->title, 'blocks' => $page->blocks->map(fn ($block) => ['id' => $block->public_id, 'position' => $block->position, 'type' => $block->type->value, 'version' => $block->version, 'payload' => $block->payload])->all()];
     }
 
     private function link($link): array

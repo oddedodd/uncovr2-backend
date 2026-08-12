@@ -6,7 +6,7 @@ available below `/api/v1/public`, require no authentication and use the
 
 ## Source of truth and visibility
 
-Release and track responses are produced only from the current, immutable
+Release responses are produced only from the current, immutable
 `release_publications` snapshot. A publication is public only while:
 
 - the publication has not been withdrawn;
@@ -31,7 +31,7 @@ the public presenter.
 | GET | `/public/releases/recent` | Publications ordered newest first. |
 | GET | `/public/releases/featured` | Superadmin-curated current publications. |
 | GET | `/public/releases/{release_id}` | Frozen public release detail. |
-| GET | `/public/tracks/{track_id}` | Frozen public track detail and release summary. |
+| GET | `/public/tracks/{track_id}` | Legacy compatibility for existing published track links; outside the portal builder model. |
 
 List endpoints accept `filter[search]`, `page[size]`, `page[after]` and
 `page[before]`. Page size defaults to 25 and is limited to 100. Cursors are

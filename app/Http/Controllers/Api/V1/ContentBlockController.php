@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Releases\StoreContentBlockRequest;
 use App\Http\Requests\Api\V1\Releases\UpdateContentBlockRequest;
+use App\Http\Resources\ContentBlockResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\ContentBlock;
 use App\Models\Page;
@@ -60,6 +61,6 @@ final class ContentBlockController extends Controller
 
     private function resource(ContentBlock $block): array
     {
-        return ['id' => $block->public_id, 'page_id' => $block->page->public_id, 'position' => $block->position, 'type' => $block->type->value, 'version' => $block->version, 'payload' => $block->payload];
+        return (new ContentBlockResource($block->loadMissing('page')))->resolve();
     }
 }

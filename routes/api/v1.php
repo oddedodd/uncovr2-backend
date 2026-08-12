@@ -205,21 +205,16 @@ Route::middleware(['auth:sanctum', 'active-device-session', 'throttle:authentica
         Route::post('/releases/{release}/editors', [ReleaseEditorController::class, 'store'])->name('releases.editors.store');
         Route::delete('/releases/{release}/editors/{user}', [ReleaseEditorController::class, 'destroy'])->name('releases.editors.destroy');
 
-        Route::post('/releases/{release}/tracks', [TrackController::class, 'store'])->name('releases.tracks.store');
-        Route::patch('/releases/{release}/tracks/{track}', [TrackController::class, 'update'])->name('releases.tracks.update');
-        Route::delete('/releases/{release}/tracks/{track}', [TrackController::class, 'destroy'])->name('releases.tracks.destroy');
+        // Portal release builder: release -> pages -> blocks.
         Route::post('/releases/{release}/pages', [PageController::class, 'storeForRelease'])->name('releases.pages.store');
-        Route::post('/tracks/{track}/pages', [PageController::class, 'storeForTrack'])->name('tracks.pages.store');
         Route::patch('/pages/{page}', [PageController::class, 'update'])->name('pages.update');
         Route::delete('/pages/{page}', [PageController::class, 'destroy'])->name('pages.destroy');
-
         Route::post('/pages/{page}/blocks', [ContentBlockController::class, 'store'])->name('pages.blocks.store');
         Route::patch('/pages/{page}/blocks/{block}', [ContentBlockController::class, 'update'])->name('pages.blocks.update');
         Route::delete('/pages/{page}/blocks/{block}', [ContentBlockController::class, 'destroy'])->name('pages.blocks.destroy');
         Route::get('/pages/{page}/blocks/{block}/versions', [ContentBlockController::class, 'versions'])->name('pages.blocks.versions');
 
         Route::post('/releases/{release}/streaming-links', [StreamingLinkController::class, 'storeForRelease'])->name('releases.streaming-links.store');
-        Route::post('/tracks/{track}/streaming-links', [StreamingLinkController::class, 'storeForTrack'])->name('tracks.streaming-links.store');
         Route::patch('/streaming-links/{streamingLink}', [StreamingLinkController::class, 'update'])->name('streaming-links.update');
         Route::delete('/streaming-links/{streamingLink}', [StreamingLinkController::class, 'destroy'])->name('streaming-links.destroy');
 
@@ -228,9 +223,16 @@ Route::middleware(['auth:sanctum', 'active-device-session', 'throttle:authentica
         Route::patch('/contributors/{contributor}', [ContributorController::class, 'update'])->name('contributors.update');
         Route::delete('/contributors/{contributor}', [ContributorController::class, 'destroy'])->name('contributors.destroy');
         Route::post('/releases/{release}/credits', [CreditController::class, 'storeForRelease'])->name('releases.credits.store');
-        Route::post('/tracks/{track}/credits', [CreditController::class, 'storeForTrack'])->name('tracks.credits.store');
         Route::patch('/credits/{credit}', [CreditController::class, 'update'])->name('credits.update');
         Route::delete('/credits/{credit}', [CreditController::class, 'destroy'])->name('credits.destroy');
+
+        // Legacy listener compatibility. Not part of the portal release builder.
+        Route::post('/releases/{release}/tracks', [TrackController::class, 'store'])->name('releases.tracks.store');
+        Route::patch('/releases/{release}/tracks/{track}', [TrackController::class, 'update'])->name('releases.tracks.update');
+        Route::delete('/releases/{release}/tracks/{track}', [TrackController::class, 'destroy'])->name('releases.tracks.destroy');
+        Route::post('/tracks/{track}/pages', [PageController::class, 'storeForTrack'])->name('tracks.pages.store');
+        Route::post('/tracks/{track}/streaming-links', [StreamingLinkController::class, 'storeForTrack'])->name('tracks.streaming-links.store');
+        Route::post('/tracks/{track}/credits', [CreditController::class, 'storeForTrack'])->name('tracks.credits.store');
 
         Route::post('/media', [MediaController::class, 'store'])->name('media.store');
         Route::post('/media/downloads', [MediaUploadController::class, 'downloads'])->name('media.downloads.store');

@@ -13,12 +13,59 @@ final class ReleaseSnapshotBuilder
     {
         $release->loadMissing([
             'organization', 'ownerArtist', 'coverMedia', 'artistLinks.artist.profile',
-            'editorAssignments.user.profile', 'tracks.pages.blocks', 'tracks.streamingLinks',
-            'tracks.credits.contributor', 'pages.blocks', 'streamingLinks', 'credits.contributor',
+            'editorAssignments.user.profile', 'pages.blocks', 'streamingLinks', 'credits.contributor',
         ]);
         $snapshot = (new ReleaseResource($release))->resolve();
 
         return Arr::except($snapshot, ['editor_user_ids', 'created_at', 'updated_at']);
+    }
+
+    /**
+     * Preserve published-track compatibility while the listener track domain is
+     * migrated. Tracks are intentionally absent from the portal builder resource.
+     */
+    public function buildForPublication(Release $release): array
+    {
+        $snapshot = $this->build($release);
+        $release->loadMissing(['tracks.pages.blocks', 'tracks.streamingLinks', 'tracks.credits.contributor']);
+        $snapshot['tracks'] = $release->tracks->map(fn ($track): array => [
+            'id' => $track->public_id,
+            'position' => $track->position,
+            'title' => $track->title,
+            'duration_ms' => $track->duration_ms,
+            'isrc' => $track->isrc,
+            'is_explicit' => $track->is_explicit,
+            'pages' => $track->pages->map(fn ($page): array => [
+                'id' => $page->public_id,
+                'position' => $page->position,
+                'title' => $page->title,
+                'blocks' => $page->blocks->map(fn ($block): array => [
+                    'id' => $block->public_id,
+                    'position' => $block->position,
+                    'type' => $block->type->value,
+                    'version' => $block->version,
+                    'payload' => $block->payload,
+                ])->all(),
+            ])->all(),
+            'streaming_links' => $track->streamingLinks->map(fn ($link): array => [
+                'id' => $link->public_id,
+                'service' => $link->service,
+                'url' => $link->url,
+                'position' => $link->position,
+            ])->all(),
+            'credits' => $track->credits->map(fn ($credit): array => [
+                'id' => $credit->public_id,
+                'contributor' => [
+                    'id' => $credit->contributor->public_id,
+                    'display_name' => $credit->contributor->display_name,
+                ],
+                'role' => $credit->role,
+                'detail' => $credit->detail,
+                'position' => $credit->position,
+            ])->all(),
+        ])->all();
+
+        return $snapshot;
     }
 
     public function fingerprint(Release $release): string
@@ -35,6 +82,8 @@ final class ReleaseSnapshotBuilder
         if ($release->coverMedia) {
             $ids[$release->coverMedia->public_id] = $release->coverMedia;
         }
+        // Track-page media remains publishable only for the temporary legacy
+        // listener snapshot. The portal builder itself exposes release pages only.
         foreach ($release->pages->concat($release->tracks->flatMap->pages)->flatMap->blocks as $block) {
             $this->collectUlids($block->payload, $ids, $release);
         }

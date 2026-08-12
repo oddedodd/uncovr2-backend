@@ -94,6 +94,6 @@ final class ReleaseController extends Controller
 
     private function includes(): array
     {
-        return ['organization', 'ownerArtist', 'coverMedia', 'artistLinks.artist.profile', 'editorAssignments.user.profile', 'tracks.pages.blocks', 'tracks.streamingLinks', 'tracks.credits.contributor', 'pages.blocks', 'streamingLinks', 'credits.contributor'];
+        return ['organization', 'ownerArtist', 'coverMedia', 'artistLinks.artist.profile', 'editorAssignments.user.profile', 'pages.blocks', 'streamingLinks', 'credits.contributor'];
     }
 }

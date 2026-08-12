@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Releases\StorePageRequest;
 use App\Http\Requests\Api\V1\Releases\UpdatePageRequest;
+use App\Http\Resources\ReleasePageResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Page;
 use App\Models\Release;
@@ -78,6 +79,6 @@ final class PageController extends Controller
 
     private function resource(Page $page): array
     {
-        return ['id' => $page->public_id, 'parent' => $page->release_id ? ['type' => 'release', 'id' => $page->release->public_id] : ['type' => 'track', 'id' => $page->track->public_id], 'position' => $page->position, 'title' => $page->title];
+        return (new ReleasePageResource($page->loadMissing('blocks.page')))->resolve();
     }
 }

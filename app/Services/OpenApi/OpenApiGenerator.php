@@ -58,6 +58,39 @@ class OpenApiGenerator
                             'height' => ['type' => ['integer', 'null']],
                         ],
                     ],
+                    'ContentBlock' => [
+                        'type' => 'object',
+                        'additionalProperties' => false,
+                        'required' => ['id', 'page_id', 'position', 'type', 'version', 'payload'],
+                        'properties' => [
+                            'id' => $this->ulidSchema(),
+                            'page_id' => $this->ulidSchema(),
+                            'position' => ['type' => 'integer', 'minimum' => 1],
+                            'type' => ['type' => 'string', 'enum' => ['heading', 'text', 'image', 'gallery', 'video', 'quote', 'lyrics']],
+                            'version' => ['type' => 'integer', 'minimum' => 1],
+                            'payload' => ['type' => 'object', 'additionalProperties' => true],
+                        ],
+                    ],
+                    'ReleasePage' => [
+                        'type' => 'object',
+                        'additionalProperties' => false,
+                        'required' => ['id', 'parent', 'position', 'title', 'blocks'],
+                        'properties' => [
+                            'id' => $this->ulidSchema(),
+                            'parent' => [
+                                'type' => 'object',
+                                'additionalProperties' => false,
+                                'required' => ['type', 'id'],
+                                'properties' => [
+                                    'type' => ['type' => 'string', 'const' => 'release'],
+                                    'id' => $this->ulidSchema(),
+                                ],
+                            ],
+                            'position' => ['type' => 'integer', 'minimum' => 1],
+                            'title' => ['type' => ['string', 'null'], 'maxLength' => 200],
+                            'blocks' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/ContentBlock']],
+                        ],
+                    ],
                     'Error' => [
                         'type' => 'object',
                         'required' => ['message'],
@@ -97,6 +130,16 @@ class OpenApiGenerator
 
         if ($authenticated) {
             $operation['security'] = [['bearerAuth' => []], ['cookieAuth' => []]];
+        }
+
+        if ($this->isPortalReleaseBuilderOperation($name)) {
+            $operation['x-uncovr-contract'] = 'portal-release-builder';
+        } elseif ($this->isTrackOperation($path)) {
+            $operation['x-uncovr-contract'] = 'legacy-track-compatibility';
+            $operation['description'] = 'Outside the portal release-builder contract. Retained temporarily for compatibility with the legacy listener and published-track domain.';
+            if ($this->isLegacyTrackMutation($name)) {
+                $operation['deprecated'] = true;
+            }
         }
 
         if (in_array($method, ['post', 'put', 'patch'], true)) {
@@ -219,6 +262,22 @@ class OpenApiGenerator
                     ],
                 ],
             ];
+        }
+
+        if (str_ends_with($name, 'releases.pages.store')) {
+            return $this->pageSchema(false);
+        }
+
+        if (str_ends_with($name, 'pages.update')) {
+            return $this->pageSchema(true);
+        }
+
+        if (str_ends_with($name, 'pages.blocks.store')) {
+            return $this->contentBlockSchema(false);
+        }
+
+        if (str_ends_with($name, 'pages.blocks.update')) {
+            return $this->contentBlockSchema(true);
         }
 
         if (str_ends_with($name, 'platform.organization-onboardings.store')) {
@@ -353,6 +412,44 @@ class OpenApiGenerator
     }
 
     /** @return array<string, mixed> */
+    private function ulidSchema(): array
+    {
+        return [
+            'type' => 'string',
+            'pattern' => '^[0-9A-Za-z]{26}$',
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function pageSchema(bool $update): array
+    {
+        return [
+            'type' => 'object',
+            'additionalProperties' => false,
+            ...($update ? [] : ['required' => ['position']]),
+            'properties' => [
+                'position' => ['type' => 'integer', 'minimum' => 1],
+                'title' => ['type' => ['string', 'null'], 'maxLength' => 200],
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function contentBlockSchema(bool $update): array
+    {
+        return [
+            'type' => 'object',
+            'additionalProperties' => false,
+            ...($update ? [] : ['required' => ['position', 'type', 'payload']]),
+            'properties' => [
+                'position' => ['type' => 'integer', 'minimum' => 1],
+                'type' => ['type' => 'string', 'enum' => ['heading', 'text', 'image', 'gallery', 'video', 'quote', 'lyrics']],
+                'payload' => ['type' => 'object', 'additionalProperties' => true],
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
     private function releaseSchema(bool $update): array
     {
         $properties = [
@@ -433,7 +530,7 @@ class OpenApiGenerator
     {
         $success = $method === 'post' && ! str_ends_with($name, 'media.downloads.store')
             ? '201'
-            : ($method === 'delete' ? '204' : '200');
+            : '200';
         $responses = [
             $success => ['description' => 'Successful response'],
             '422' => [
@@ -504,10 +601,11 @@ class OpenApiGenerator
                     'data' => [
                         'type' => 'object',
                         'additionalProperties' => true,
-                        'required' => ['cover_media_id', 'cover_media'],
+                        'required' => ['cover_media_id', 'cover_media', 'pages'],
                         'properties' => [
                             'cover_media_id' => $this->nullableUlidSchema(),
                             'cover_media' => ['anyOf' => [['$ref' => '#/components/schemas/MediaReference'], ['type' => 'null']]],
+                            'pages' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/ReleasePage']],
                         ],
                     ],
                 ],
@@ -543,7 +641,68 @@ class OpenApiGenerator
             ];
         }
 
+        if (str_ends_with($name, 'releases.pages.store') || str_ends_with($name, 'pages.update')) {
+            return $this->dataResponseSchema('#/components/schemas/ReleasePage');
+        }
+
+        if (str_ends_with($name, 'pages.blocks.store') || str_ends_with($name, 'pages.blocks.update')) {
+            return $this->dataResponseSchema('#/components/schemas/ContentBlock');
+        }
+
+        if (str_ends_with($name, 'pages.blocks.versions')) {
+            return [
+                'type' => 'object',
+                'required' => ['data'],
+                'properties' => [
+                    'data' => [
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'object',
+                            'required' => ['version', 'type', 'payload', 'created_at'],
+                            'properties' => [
+                                'version' => ['type' => 'integer', 'minimum' => 1],
+                                'type' => ['type' => 'string', 'enum' => ['heading', 'text', 'image', 'gallery', 'video', 'quote', 'lyrics']],
+                                'payload' => ['type' => 'object', 'additionalProperties' => true],
+                                'created_at' => ['type' => 'string', 'format' => 'date-time'],
+                            ],
+                        ],
+                    ],
+                ],
+            ];
+        }
+
         return null;
+    }
+
+    /** @return array<string, mixed> */
+    private function dataResponseSchema(string $reference): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['data'],
+            'properties' => ['data' => ['$ref' => $reference]],
+        ];
+    }
+
+    private function isPortalReleaseBuilderOperation(string $name): bool
+    {
+        return str_ends_with($name, 'releases.pages.store')
+            || str_ends_with($name, 'pages.update')
+            || str_ends_with($name, 'pages.destroy')
+            || str_contains($name, '.pages.blocks.');
+    }
+
+    private function isTrackOperation(string $path): bool
+    {
+        return str_contains($path, '/tracks') || str_contains($path, '{track}');
+    }
+
+    private function isLegacyTrackMutation(string $name): bool
+    {
+        return str_contains($name, '.releases.tracks.')
+            || str_contains($name, '.tracks.pages.')
+            || str_contains($name, '.tracks.streaming-links.')
+            || str_contains($name, '.tracks.credits.');
     }
 
     private function tag(string $path): string

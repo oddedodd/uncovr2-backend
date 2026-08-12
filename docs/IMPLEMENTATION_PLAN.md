@@ -159,8 +159,10 @@ is maintained in the portal repository.
 
 - [x] `B4.1` Create releases with album, EP and single types.
 - [x] `B4.2` Create release-to-artist relationships with a primary artist.
-- [x] `B4.3` Create ordered tracks.
-- [x] `B4.4` Create ordered pages belonging to releases or tracks.
+- [x] `B4.3` Legacy: create ordered tracks. Superseded for the portal builder;
+  retained temporarily for listener and published-content compatibility.
+- [x] `B4.4` Create ordered pages directly belonging to releases. Historical
+  track pages remain readable only as legacy compatibility data.
 - [x] `B4.5` Create versioned, validated content blocks.
 - [x] `B4.6` Support initial block types: heading, text, image, gallery, video, quote and lyrics.
 - [x] `B4.7` Create streaming links with validated service and URL fields.
@@ -173,8 +175,15 @@ is maintained in the portal repository.
 ### B4 gate
 
 - [x] An authorized artist or label user can create a complete draft release.
-- [x] The draft can contain tracks, pages, blocks, links, media references and credits.
+- [x] The portal draft is composed from release pages, blocks, links, media
+  references and credits; release type is metadata and not a track hierarchy.
 - [x] Users outside the owning scope cannot read drafts or modify content.
+- [x] `B4.13` Align the portal builder contract to `release -> pages -> blocks`,
+  remove tracks from `ReleaseResource`, and document exact page/block contracts.
+- [x] `B4.14` Mark track mutations deprecated and outside the portal contract
+  without deleting data required by existing listener/public features.
+- [ ] `B4.15` Audit production track dependencies and execute a separate,
+  versioned retirement or migration after the listener product decision.
 
 ## B5 — Media, approval and publishing
 
@@ -204,7 +213,8 @@ is maintained in the portal repository.
 
 ## B6 — Public content API and discovery foundation
 
-- [x] `B6.1` Implement public label, artist, release and track representations.
+- [x] `B6.1` Implement public label, artist and release representations. Existing
+  public track representation is retained as legacy compatibility.
 - [x] `B6.2` Return only published and currently available content.
 - [x] `B6.3` Add paginated search for labels, artists and releases.
 - [x] `B6.4` Add featured and recent-release endpoints.
@@ -229,7 +239,8 @@ This work was explicitly advanced after the portal foundation was completed.
 The complete portal-to-mobile gate still remains required before Expo work.
 
 - [x] `B7.1` Implement unique artist follows.
-- [x] `B7.2` Implement unique release and track favorites.
+- [x] `B7.2` Implement unique release favorites. Existing track favorites remain
+  legacy compatibility pending `B4.15`.
 - [x] `B7.3` Implement private collections and ordered collection items.
 - [x] `B7.4` Implement notification preferences by channel and topic, keeping
   required account/security email separate from optional marketing consent.

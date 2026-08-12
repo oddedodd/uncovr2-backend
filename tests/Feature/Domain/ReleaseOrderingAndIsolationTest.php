@@ -15,27 +15,21 @@ class ReleaseOrderingAndIsolationTest extends TestCase
     public function test_ordered_children_are_unique_per_parent_and_returned_in_position_order(): void
     {
         [$release, $organization] = $this->releaseContext();
-        $secondId = $this->postApi("/releases/{$release->public_id}/tracks", ['position' => 2, 'title' => 'Second', 'duration_ms' => null, 'isrc' => null, 'is_explicit' => false])->assertCreated()->json('data.id');
-        $firstId = $this->postApi("/releases/{$release->public_id}/tracks", ['position' => 1, 'title' => 'First', 'duration_ms' => null, 'isrc' => null, 'is_explicit' => false])->assertCreated()->json('data.id');
-        $this->assertApiError($this->postApi("/releases/{$release->public_id}/tracks", ['position' => 1, 'title' => 'Duplicate', 'duration_ms' => null, 'isrc' => null, 'is_explicit' => false]), 422, 'validation_failed');
-
-        $releasePage = $this->postApi("/releases/{$release->public_id}/pages", ['position' => 1, 'title' => null])->assertCreated()->json('data.id');
-        $trackPage = $this->postApi("/tracks/{$firstId}/pages", ['position' => 1, 'title' => null])->assertCreated()->json('data.id');
+        $secondPage = $this->postApi("/releases/{$release->public_id}/pages", ['position' => 2, 'title' => 'Second'])->assertCreated()->assertJsonPath('data.blocks', [])->json('data.id');
+        $firstPage = $this->postApi("/releases/{$release->public_id}/pages", ['position' => 1, 'title' => 'First'])->assertCreated()->assertJsonPath('data.parent.type', 'release')->json('data.id');
         $this->assertApiError($this->postApi("/releases/{$release->public_id}/pages", ['position' => 1, 'title' => 'Duplicate']), 422, 'validation_failed');
 
-        $this->postApi("/pages/{$releasePage}/blocks", ['position' => 1, 'type' => 'text', 'payload' => ['body' => 'One']])->assertCreated();
-        $this->assertApiError($this->postApi("/pages/{$releasePage}/blocks", ['position' => 1, 'type' => 'text', 'payload' => ['body' => 'Duplicate']]), 422, 'validation_failed');
+        $this->postApi("/pages/{$firstPage}/blocks", ['position' => 1, 'type' => 'text', 'payload' => ['body' => 'One']])->assertCreated();
+        $this->assertApiError($this->postApi("/pages/{$firstPage}/blocks", ['position' => 1, 'type' => 'text', 'payload' => ['body' => 'Duplicate']]), 422, 'validation_failed');
 
         $this->postApi("/releases/{$release->public_id}/streaming-links", ['service' => 'spotify', 'url' => 'https://open.spotify.com/album/one', 'position' => 1])->assertCreated();
         $this->assertApiError($this->postApi("/releases/{$release->public_id}/streaming-links", ['service' => 'spotify', 'url' => 'https://open.spotify.com/album/two', 'position' => 2]), 422, 'validation_failed');
         $this->assertApiError($this->postApi("/releases/{$release->public_id}/streaming-links", ['service' => 'tidal', 'url' => 'https://tidal.com/album/two', 'position' => 1]), 422, 'validation_failed');
-        $this->postApi("/tracks/{$firstId}/streaming-links", ['service' => 'spotify', 'url' => 'https://open.spotify.com/track/one', 'position' => 1])->assertCreated();
-
         $this->getApi("/releases/{$release->public_id}")->assertOk()
-            ->assertJsonPath('data.tracks.0.id', $firstId)
-            ->assertJsonPath('data.tracks.1.id', $secondId)
-            ->assertJsonPath('data.pages.0.id', $releasePage)
-            ->assertJsonPath('data.tracks.0.pages.0.id', $trackPage);
+            ->assertJsonMissingPath('data.tracks')
+            ->assertJsonPath('data.pages.0.id', $firstPage)
+            ->assertJsonPath('data.pages.0.blocks.0.payload.body', 'One')
+            ->assertJsonPath('data.pages.1.id', $secondPage);
     }
 
     public function test_media_and_contributors_are_storage_independent_and_tenant_isolated(): void

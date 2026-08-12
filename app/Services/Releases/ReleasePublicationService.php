@@ -106,7 +106,7 @@ final class ReleasePublicationService
         $version = $release->publication_version + 1;
         $mediaUrls = $this->promoteMedia($release, $version);
         $publishedAt = now();
-        $snapshot = $this->snapshots->build($release);
+        $snapshot = $this->snapshots->buildForPublication($release);
         $snapshot['status'] = ReleaseStatus::Published->value;
         $snapshot['lifecycle']['published_at'] = $publishedAt->utc()->format('Y-m-d\TH:i:s.v\Z');
         $snapshot['lifecycle']['publication_version'] = $version;

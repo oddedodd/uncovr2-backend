@@ -41,10 +41,7 @@ class CompleteDraftReleaseTest extends TestCase
         ])->assertCreated()->assertJsonPath('data.status', 'draft')->assertJsonPath('data.artists.0.is_primary', true);
         $releaseId = $releaseResponse->json('data.id');
 
-        $trackOneId = $this->postApi("/releases/{$releaseId}/tracks", ['position' => 1, 'title' => 'Arrival', 'duration_ms' => 183000, 'isrc' => 'NOABC2600001', 'is_explicit' => false])->assertCreated()->json('data.id');
-        $trackTwoId = $this->postApi("/releases/{$releaseId}/tracks", ['position' => 2, 'title' => 'Departure', 'duration_ms' => 201000, 'isrc' => 'NOABC2600002', 'is_explicit' => false])->assertCreated()->json('data.id');
         $releasePageId = $this->postApi("/releases/{$releaseId}/pages", ['position' => 1, 'title' => 'Story'])->assertCreated()->json('data.id');
-        $trackPageId = $this->postApi("/tracks/{$trackOneId}/pages", ['position' => 1, 'title' => 'Lyrics and notes'])->assertCreated()->json('data.id');
 
         $blocks = [
             ['heading', ['text' => 'Signals', 'level' => 1]],
@@ -60,16 +57,12 @@ class CompleteDraftReleaseTest extends TestCase
         }
 
         $this->postApi("/releases/{$releaseId}/streaming-links", ['service' => 'spotify', 'url' => 'https://open.spotify.com/album/example', 'position' => 1])->assertCreated();
-        $this->postApi("/tracks/{$trackOneId}/streaming-links", ['service' => 'apple_music', 'url' => 'https://music.apple.com/no/song/example', 'position' => 1])->assertCreated();
         $this->postApi("/releases/{$releaseId}/credits", ['contributor_id' => $contributorId, 'role' => 'producer', 'detail' => 'Executive producer', 'position' => 1])->assertCreated();
-        $this->postApi("/tracks/{$trackOneId}/credits", ['contributor_id' => $contributorId, 'role' => 'songwriter', 'detail' => null, 'position' => 1])->assertCreated();
 
         $this->getApi("/releases/{$releaseId}")->assertOk()
             ->assertJsonPath('data.owner.id', $organization->public_id)
             ->assertJsonPath('data.cover_media_id', $coverId)
-            ->assertJsonPath('data.tracks.0.id', $trackOneId)
-            ->assertJsonPath('data.tracks.1.id', $trackTwoId)
-            ->assertJsonPath('data.tracks.0.pages.0.id', $trackPageId)
+            ->assertJsonMissingPath('data.tracks')
             ->assertJsonCount(7, 'data.pages.0.blocks')
             ->assertJsonPath('data.pages.0.blocks.6.type', 'lyrics')
             ->assertJsonPath('data.streaming_links.0.service', 'spotify')
@@ -80,7 +73,7 @@ class CompleteDraftReleaseTest extends TestCase
         $this->assertDatabaseHas('release_editors', ['release_id' => $release->id, 'user_id' => $editor->id]);
         $this->assertDatabaseCount('content_blocks', 7);
         $this->assertDatabaseCount('content_block_versions', 7);
-        $this->assertGreaterThanOrEqual(16, $release->activityEvents()->count());
+        $this->assertGreaterThanOrEqual(11, $release->activityEvents()->count());
         $this->assertSame(7, ContentBlock::query()->count());
     }
 

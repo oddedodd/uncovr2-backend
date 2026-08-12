@@ -10,10 +10,12 @@ foreign private identifier both return 404.
 
 ## Library and collections
 
-Artist follows and release/track favorites use idempotent `PUT` and `DELETE`
+Artist follows and release favorites use idempotent `PUT` and `DELETE`
 operations below `/api/v1/me`. Their database pairs are unique, making repeated
 requests safe during mobile synchronization. Lists use opaque cursor
-pagination.
+pagination. Track favorites and track collection targets are retained only for
+legacy listener compatibility and are outside the portal release-builder
+contract.
 
 Private collections support create, list, show, update and delete. A complete
 ordered item list is replaced atomically with:
