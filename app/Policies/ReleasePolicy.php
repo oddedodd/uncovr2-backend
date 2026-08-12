@@ -71,9 +71,13 @@ final class ReleasePolicy
 
     private function canViewOwner(User $user, Release $release): bool
     {
-        return $release->organization_id
+        $canViewOwner = $release->organization_id
             ? $this->access->canViewOrganization($user, $release->organization)
             : $this->access->canViewArtist($user, $release->ownerArtist);
+
+        return $canViewOwner || $release->artistLinks->contains(
+            fn ($link): bool => $this->access->canViewArtist($user, $link->artist),
+        );
     }
 
     private function canManageOwner(User $user, Release $release): bool

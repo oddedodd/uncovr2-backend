@@ -181,6 +181,9 @@ class OpenApiGenerator
                 $this->queryParameter('filter[search]', ['type' => 'string', 'minLength' => 2, 'maxLength' => 100]),
                 $this->queryParameter('filter[status]', ['type' => 'string', 'enum' => ['draft', 'review', 'scheduled', 'published', 'unpublished', 'archived']]),
                 $this->queryParameter('filter[type]', ['type' => 'string', 'enum' => ['album', 'ep', 'single']]),
+                $this->queryParameter('filter[artist_id]', ['type' => 'string', 'pattern' => '^[0-9A-Za-z]{26}$']),
+                $this->queryParameter('filter[owner_type]', ['type' => 'string', 'enum' => ['organization', 'artist']]),
+                $this->queryParameter('filter[owner_id]', ['type' => 'string', 'pattern' => '^[0-9A-Za-z]{26}$']),
             ],
             default => [],
         };

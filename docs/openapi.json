@@ -2475,6 +2475,36 @@
                         }
                     },
                     {
+                        "name": "filter[artist_id]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^[0-9A-Za-z]{26}$"
+                        }
+                    },
+                    {
+                        "name": "filter[owner_type]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "organization",
+                                "artist"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "filter[owner_id]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^[0-9A-Za-z]{26}$"
+                        }
+                    },
+                    {
                         "name": "page[size]",
                         "in": "query",
                         "required": false,
@@ -6708,6 +6738,36 @@
                                 "ep",
                                 "single"
                             ]
+                        }
+                    },
+                    {
+                        "name": "filter[artist_id]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^[0-9A-Za-z]{26}$"
+                        }
+                    },
+                    {
+                        "name": "filter[owner_type]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "organization",
+                                "artist"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "filter[owner_id]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^[0-9A-Za-z]{26}$"
                         }
                     },
                     {

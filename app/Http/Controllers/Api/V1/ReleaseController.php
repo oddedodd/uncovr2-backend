@@ -8,7 +8,10 @@ use App\Http\Requests\Api\V1\ReleaseIndexRequest;
 use App\Http\Requests\Api\V1\Releases\StoreReleaseRequest;
 use App\Http\Requests\Api\V1\Releases\UpdateReleaseRequest;
 use App\Http\Resources\ReleaseResource;
+use App\Http\Resources\ReleaseSummaryResource;
 use App\Http\Responses\ApiResponse;
+use App\Models\Artist;
+use App\Models\Organization;
 use App\Models\Release;
 use App\Services\Api\CursorPagination;
 use App\Services\Releases\ReleaseService;
@@ -20,13 +23,21 @@ final class ReleaseController extends Controller
 {
     public function index(ReleaseIndexRequest $request, CursorPagination $pagination): JsonResponse
     {
-        $query = Release::query()->with($this->includes())->orderByDesc('public_id');
+        $query = Release::query()
+            ->with($this->summaryIncludes())
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
+
         if (! $request->user()->is_superadmin) {
             $userId = $request->user()->getKey();
             $query->where(function ($owners) use ($userId): void {
                 $owners->whereHas('organization', fn ($organization) => $organization
                     ->where('status', 'active')->whereHas('memberships', fn ($memberships) => $memberships->where('user_id', $userId)->where('status', MembershipStatus::Active->value)))
                     ->orWhereHas('ownerArtist', fn ($artist) => $artist->where('status', 'active')->where(function ($access) use ($userId): void {
+                        $access->whereHas('memberships', fn ($memberships) => $memberships->where('user_id', $userId)->where('status', MembershipStatus::Active->value))
+                            ->orWhereHas('organizationRelationships', fn ($relations) => $relations->whereNull('ended_at')->whereHas('organization.memberships', fn ($memberships) => $memberships->where('user_id', $userId)->where('status', MembershipStatus::Active->value)));
+                    }))
+                    ->orWhereHas('artistLinks.artist', fn ($artist) => $artist->where('status', 'active')->where(function ($access) use ($userId): void {
                         $access->whereHas('memberships', fn ($memberships) => $memberships->where('user_id', $userId)->where('status', MembershipStatus::Active->value))
                             ->orWhereHas('organizationRelationships', fn ($relations) => $relations->whereNull('ended_at')->whereHas('organization.memberships', fn ($memberships) => $memberships->where('user_id', $userId)->where('status', MembershipStatus::Active->value)));
                     }));
@@ -54,10 +65,34 @@ final class ReleaseController extends Controller
             });
         }
 
+        if ($request->filled('filter.artist_id')) {
+            $artist = Artist::query()
+                ->where('public_id', $request->string('filter.artist_id')->toString())
+                ->firstOrFail();
+
+            $query->where(function ($artists) use ($artist): void {
+                $artists->where('artist_id', $artist->getKey())
+                    ->orWhereHas('artistLinks', fn ($links) => $links->where('artist_id', $artist->getKey()));
+            });
+        }
+
+        if ($request->filled('filter.owner_type') || $request->filled('filter.owner_id')) {
+            $ownerType = $request->string('filter.owner_type')->toString();
+            $ownerId = $request->string('filter.owner_id')->toString();
+
+            if ($ownerType === 'organization') {
+                $organization = Organization::query()->where('public_id', $ownerId)->firstOrFail();
+                $query->where('organization_id', $organization->getKey());
+            } else {
+                $artist = Artist::query()->where('public_id', $ownerId)->firstOrFail();
+                $query->where('artist_id', $artist->getKey());
+            }
+        }
+
         $payload = $pagination->paginate(
             $query,
             $request,
-            fn (Release $release): array => (new ReleaseResource($release))->resolve($request),
+            fn (Release $release): array => (new ReleaseSummaryResource($release))->resolve($request),
         );
 
         return response()->json($payload);
@@ -95,5 +130,10 @@ final class ReleaseController extends Controller
     private function includes(): array
     {
         return ['organization', 'ownerArtist', 'coverMedia', 'artistLinks.artist.profile', 'editorAssignments.user.profile', 'pages.blocks', 'streamingLinks', 'credits.contributor'];
+    }
+
+    private function summaryIncludes(): array
+    {
+        return ['organization', 'ownerArtist', 'coverMedia', 'artistLinks.artist.profile', 'editorAssignments.user'];
     }
 }
