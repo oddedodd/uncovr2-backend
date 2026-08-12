@@ -22,7 +22,7 @@ final class CurrentDeviceSessionResolver
         $accessToken = $request->user()?->currentAccessToken();
 
         if ($accessToken instanceof PersonalAccessToken && $accessToken->device_session_id !== null) {
-            return $this->remember($request, DeviceSession::query()->find($accessToken->device_session_id));
+            return $this->remember($request, $this->bearerSession($accessToken->device_session_id));
         }
 
         if (! $request->hasSession()) {
@@ -45,26 +45,63 @@ final class CurrentDeviceSessionResolver
             ->first());
     }
 
-    public function cachePortalSession(DeviceSession $session): void
+    /**
+     * Refreshes every cache entry that can resolve to this session. Call after any
+     * write to the session, otherwise a stale entry keeps being served.
+     */
+    public function cacheSession(DeviceSession $session): void
     {
-        if ($session->web_session_id === null || $this->portalCacheSeconds() === 0) {
-            return;
+        if ($this->bearerCacheSeconds() > 0) {
+            Cache::put(
+                $this->bearerCacheKey($session->getKey()),
+                $this->cachePayload($session),
+                now()->addSeconds($this->bearerCacheSeconds()),
+            );
         }
 
-        Cache::put(
-            $this->portalCacheKey($session->web_session_id),
-            $this->portalCachePayload($session),
-            now()->addSeconds($this->portalCacheSeconds()),
-        );
+        if ($session->web_session_id !== null && $this->portalCacheSeconds() > 0) {
+            Cache::put(
+                $this->portalCacheKey($session->web_session_id),
+                $this->cachePayload($session),
+                now()->addSeconds($this->portalCacheSeconds()),
+            );
+        }
     }
 
-    public function forgetPortalSession(?string $webSessionId): void
+    public function forgetSession(DeviceSession $session): void
     {
-        if ($webSessionId === null || $this->portalCacheSeconds() === 0) {
-            return;
+        Cache::forget($this->bearerCacheKey($session->getKey()));
+
+        if ($session->web_session_id !== null) {
+            Cache::forget($this->portalCacheKey($session->web_session_id));
+        }
+    }
+
+    private function bearerSession(int|string $deviceSessionId): ?DeviceSession
+    {
+        if ($this->bearerCacheSeconds() === 0) {
+            return DeviceSession::query()->find($deviceSessionId);
         }
 
-        Cache::forget($this->portalCacheKey($webSessionId));
+        $cacheKey = $this->bearerCacheKey($deviceSessionId);
+        $cached = Cache::get($cacheKey);
+
+        if ($cached !== null) {
+            $session = $this->sessionFromCache($cached, 'id', $deviceSessionId);
+            if ($session !== null) {
+                return $session;
+            }
+
+            Cache::forget($cacheKey);
+        }
+
+        $session = DeviceSession::query()->find($deviceSessionId);
+
+        if ($session !== null) {
+            $this->cacheSession($session);
+        }
+
+        return $session;
     }
 
     private function portalSession(string $webSessionId): ?DeviceSession
@@ -79,7 +116,7 @@ final class CurrentDeviceSessionResolver
         $cached = Cache::get($cacheKey);
 
         if ($cached !== null) {
-            $session = $this->sessionFromPortalCache($cached, $webSessionId);
+            $session = $this->sessionFromCache($cached, 'web_session_id', $webSessionId);
             if ($session !== null) {
                 return $session;
             }
@@ -92,7 +129,7 @@ final class CurrentDeviceSessionResolver
             ->first();
 
         if ($session !== null) {
-            $this->cachePortalSession($session);
+            $this->cacheSession($session);
         }
 
         return $session;
@@ -110,15 +147,25 @@ final class CurrentDeviceSessionResolver
         return 'auth:portal-device-session:'.hash('sha256', $webSessionId);
     }
 
+    private function bearerCacheKey(int|string $deviceSessionId): string
+    {
+        return 'auth:bearer-device-session:'.$deviceSessionId;
+    }
+
     private function portalCacheSeconds(): int
     {
         return (int) config('authentication.portal_device_session_cache_seconds');
     }
 
+    private function bearerCacheSeconds(): int
+    {
+        return (int) config('authentication.bearer_device_session_cache_seconds');
+    }
+
     /**
      * @return array<string, scalar|null>
      */
-    private function portalCachePayload(DeviceSession $session): array
+    private function cachePayload(DeviceSession $session): array
     {
         return [
             'id' => $session->getKey(),
@@ -141,9 +188,11 @@ final class CurrentDeviceSessionResolver
         ];
     }
 
-    private function sessionFromPortalCache(mixed $cached, string $webSessionId): ?DeviceSession
+    private function sessionFromCache(mixed $cached, string $identityKey, int|string $expected): ?DeviceSession
     {
-        if (! is_array($cached) || ($cached['web_session_id'] ?? null) !== $webSessionId) {
+        $identity = is_array($cached) ? ($cached[$identityKey] ?? null) : null;
+
+        if ($identity === null || ! is_scalar($identity) || (string) $identity !== (string) $expected) {
             return null;
         }
 

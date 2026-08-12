@@ -287,6 +287,12 @@ class ProfileAndCoverMediaTest extends TestCase
             ->assertJsonPath('data.items.0.media_id', $first->public_id)
             ->assertJsonPath('data.items.1.media_id', $second->public_id)
             ->assertJsonMissingPath('data.items.0.storage_key');
+        $this->assertSame(
+            [['bucket' => 'uncovr-private-media', 'paths' => [$first->storage_key, $second->storage_key]]],
+            $this->storage->batchSignCalls,
+            'Batch download must sign every object in one storage call per bucket.',
+        );
+
         $this->assertApiError($this->postApi('/media/downloads', ['media_ids' => [$pending->public_id]]), 422, 'validation_failed');
 
         $outsider = $this->domainUser('outsider@example.com');

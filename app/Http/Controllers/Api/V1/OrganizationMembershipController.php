@@ -19,7 +19,7 @@ final class OrganizationMembershipController extends Controller
     {
         Gate::authorize('manageMembers', $organization);
 
-        return ApiResponse::success($organization->memberships()->with('user.profile')->orderBy('public_id')->get()->map(fn ($membership) => $this->resource($membership))->all());
+        return ApiResponse::success($organization->memberships()->with('user.profile')->orderBy('public_id')->get()->map(fn ($membership) => $this->resource($membership, $organization))->all());
     }
 
     public function update(UpdateOrganizationMembershipRequest $request, Organization $organization, OrganizationMembership $membership, MembershipService $service): JsonResponse
@@ -27,7 +27,7 @@ final class OrganizationMembershipController extends Controller
         $this->assertParent($organization, $membership);
         Gate::authorize('update', $membership);
 
-        return ApiResponse::success($this->resource($service->updateOrganization($membership, $request->validated(), $request->user(), $request)));
+        return ApiResponse::success($this->resource($service->updateOrganization($membership, $request->validated(), $request->user(), $request), $organization));
     }
 
     public function destroy(Request $request, Organization $organization, OrganizationMembership $membership, MembershipService $service): JsonResponse
@@ -46,13 +46,13 @@ final class OrganizationMembershipController extends Controller
         }
     }
 
-    private function resource(OrganizationMembership $membership): array
+    private function resource(OrganizationMembership $membership, Organization $organization): array
     {
-        $membership->loadMissing('user.profile', 'organization');
+        $membership->loadMissing('user.profile');
 
         return [
             'id' => $membership->public_id,
-            'organization_id' => $membership->organization->public_id,
+            'organization_id' => $organization->public_id,
             'user' => ['id' => $membership->user->public_id, 'email' => $membership->user->email, 'display_name' => $membership->user->profile?->display_name],
             'role' => $membership->role->value,
             'status' => $membership->status->value,

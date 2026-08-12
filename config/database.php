@@ -97,9 +97,28 @@ return [
             'prefix_indexes' => true,
             'search_path' => env('DB_SCHEMA', 'laravel'),
             'sslmode' => env('DB_SSLMODE', 'require'),
+
+            /*
+             * Applied by App\Database\PostgresTimeoutConnector, which folds them into
+             * the `set search_path` statement Laravel already issues on connect, so
+             * they cost no extra round trip. Without these a hung Supabase query
+             * blocks the worker indefinitely. Accepts plain Postgres durations such
+             * as "15s", "5000ms" or "1min"; set to null to leave a value untouched.
+             */
+            'statement_timeout' => env('DB_STATEMENT_TIMEOUT', '15s'),
+            'lock_timeout' => env('DB_LOCK_TIMEOUT', '5s'),
+            'idle_in_transaction_session_timeout' => env('DB_IDLE_TRANSACTION_TIMEOUT', '30s'),
+            /*
+             * Emulated prepares are the default because server-side prepares cost
+             * two round trips per statement (parse, then bind and execute). Against
+             * a remote pooler that measured 196 ms versus 67 ms per query, and 67 ms
+             * is one network round trip, so emulation reaches the floor. It also
+             * avoids prepared-statement conflicts if the pooler is ever moved from
+             * session to transaction mode. Set DB_EMULATE_PREPARES=false to opt out.
+             */
             'options' => extension_loaded('pdo_pgsql') ? array_filter([
                 PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', false),
-                PDO::ATTR_EMULATE_PREPARES => env('DB_EMULATE_PREPARES'),
+                PDO::ATTR_EMULATE_PREPARES => env('DB_EMULATE_PREPARES', true),
             ], fn ($value): bool => $value !== null && $value !== false) : [],
         ],
 

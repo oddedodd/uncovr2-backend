@@ -15,6 +15,9 @@ final class FakeMediaStorage implements MediaStorage
 
     public array $copies = [];
 
+    /** @var array<int, array{bucket: string, paths: array<int, string>}> */
+    public array $batchSignCalls = [];
+
     public bool $provisioned = false;
 
     public function provisionBuckets(): void
@@ -35,6 +38,18 @@ final class FakeMediaStorage implements MediaStorage
     public function createSignedDownload(string $bucket, string $path, int $expiresIn): string
     {
         return "https://storage.test/download/{$bucket}/{$path}?expires={$expiresIn}";
+    }
+
+    public function createSignedDownloads(string $bucket, array $paths, int $expiresIn): array
+    {
+        $this->batchSignCalls[] = ['bucket' => $bucket, 'paths' => $paths];
+
+        $signed = [];
+        foreach ($paths as $path) {
+            $signed[$path] = $this->createSignedDownload($bucket, $path, $expiresIn);
+        }
+
+        return $signed;
     }
 
     public function upload(string $bucket, string $path, string $body, string $mimeType): void

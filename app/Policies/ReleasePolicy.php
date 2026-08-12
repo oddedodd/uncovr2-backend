@@ -75,8 +75,13 @@ final class ReleasePolicy
             ? $this->access->canViewOrganization($user, $release->organization)
             : $this->access->canViewArtist($user, $release->ownerArtist);
 
-        return $canViewOwner || $release->artistLinks->contains(
-            fn ($link): bool => $this->access->canViewArtist($user, $link->artist),
+        if ($canViewOwner) {
+            return true;
+        }
+
+        return $this->access->canViewAnyArtist(
+            $user,
+            $release->artistLinks->pluck('artist_id')->all(),
         );
     }
 

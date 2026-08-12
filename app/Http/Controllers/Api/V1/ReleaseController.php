@@ -139,7 +139,7 @@ final class ReleaseController extends Controller
     {
         Gate::authorize('view', $release);
 
-        return ApiResponse::success((new ReleaseResource($release->load($this->includes())))->resolve());
+        return ApiResponse::success((new ReleaseResource($release->loadMissing($this->includes())))->resolve());
     }
 
     public function update(UpdateReleaseRequest $request, Release $release, ReleaseService $service): JsonResponse
@@ -159,7 +159,7 @@ final class ReleaseController extends Controller
 
     private function includes(): array
     {
-        return ['organization', 'ownerArtist', 'coverMedia', 'artistLinks.artist.profile', 'editorAssignments.user.profile', 'pages.blocks', 'streamingLinks', 'credits.contributor'];
+        return ['organization', 'ownerArtist', 'coverMedia', 'artistLinks.artist.profile', 'editorAssignments.user', 'pages.blocks', 'streamingLinks', 'credits.contributor'];
     }
 
     /**

@@ -82,7 +82,7 @@ final class PublicCatalog
 
     public function trackById(string $publicId): array
     {
-        $track = ReleasePublicationTrack::query()->with('publication.release')
+        $track = ReleasePublicationTrack::query()->with('publication')
             ->where('track_public_id', $publicId)
             ->whereHas('publication', fn (Builder $publication) => $this->applyVisiblePublication($publication))
             ->firstOrFail();
@@ -95,7 +95,9 @@ final class PublicCatalog
 
     private function visiblePublications(): Builder
     {
-        return $this->applyVisiblePublication(ReleasePublication::query()->with('release'));
+        // The presenters read denormalized publication columns only, so the
+        // `release` relation is deliberately not eager loaded here.
+        return $this->applyVisiblePublication(ReleasePublication::query());
     }
 
     private function applyVisiblePublication(Builder $query): Builder

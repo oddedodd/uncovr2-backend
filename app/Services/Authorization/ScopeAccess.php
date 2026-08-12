@@ -14,6 +14,17 @@ final class ScopeAccess
     /** @var array<string, bool> */
     private array $cache = [];
 
+    /**
+     * Authorization decisions are memoized for the lifetime of a single request
+     * only. The container binding is scoped, but scoped instances are not flushed
+     * between requests outside the queue worker, so the request pipeline resets
+     * this explicitly.
+     */
+    public function flush(): void
+    {
+        $this->cache = [];
+    }
+
     public function canViewOrganization(User $user, Organization $organization): bool
     {
         return $this->hasOrganizationRole($user, $organization);
@@ -28,6 +39,40 @@ final class ScopeAccess
     {
         return $this->hasArtistRole($user, $artist)
             || $this->hasRelatedOrganizationRole($user, $artist);
+    }
+
+    /**
+     * Existence check across many artists at once. Equivalent to calling
+     * canViewArtist() per artist, but as a single query instead of three per artist.
+     *
+     * @param  array<int, int|string>  $artistKeys
+     */
+    public function canViewAnyArtist(User $user, array $artistKeys): bool
+    {
+        $artistKeys = array_values(array_unique($artistKeys));
+
+        if ($artistKeys === []) {
+            return false;
+        }
+
+        sort($artistKeys);
+        $key = implode(':', ['artist-any', $user->getKey(), implode(',', $artistKeys)]);
+
+        return $this->cache[$key] ??= Artist::query()
+            ->whereKey($artistKeys)
+            ->where('status', 'active')
+            ->where(fn ($query) => $query
+                ->whereHas('memberships', fn ($memberships) => $memberships
+                    ->where('user_id', $user->getKey())
+                    ->where('status', MembershipStatus::Active->value))
+                ->orWhereHas('organizationRelationships', fn ($relationships) => $relationships
+                    ->whereNull('ended_at')
+                    ->whereHas('organization', fn ($organization) => $organization
+                        ->where('status', 'active')
+                        ->whereHas('memberships', fn ($memberships) => $memberships
+                            ->where('user_id', $user->getKey())
+                            ->where('status', MembershipStatus::Active->value)))))
+            ->exists();
     }
 
     public function canEditArtist(User $user, Artist $artist): bool

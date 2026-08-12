@@ -50,25 +50,35 @@ final class MediaUploadController extends Controller
     public function downloads(BatchMediaDownloadRequest $request, MediaStorage $storage): JsonResponse
     {
         $ids = $request->validated('media_ids');
-        $mediaById = Media::query()->whereIn('public_id', $ids)->get()->keyBy('public_id');
+        $mediaById = Media::query()->with('organization', 'artist')->whereIn('public_id', $ids)->get()->keyBy('public_id');
 
         if ($mediaById->count() !== count($ids)) {
             throw ValidationException::withMessages(['media_ids' => ['One or more media records do not exist.']]);
         }
 
         $expiresIn = config('media.download_ttl_seconds');
-        $items = collect($ids)->map(function (string $id) use ($mediaById, $storage, $expiresIn): array {
+
+        // Authorize and group first, then sign each bucket in a single call. Signing
+        // per media id costs one HTTPS round trip each and does not scale.
+        $pathsByBucket = [];
+        foreach ($ids as $id) {
             $media = $mediaById->get($id);
             Gate::authorize('view', $media);
             if ($media->status !== 'ready' || ! $media->storage_disk || ! $media->storage_key) {
                 throw ValidationException::withMessages(['media_ids' => ["Media {$id} is not ready for download."]]);
             }
+            $pathsByBucket[$media->storage_disk][$media->storage_key] = true;
+        }
 
-            return [
-                'media_id' => $media->public_id,
-                'url' => $storage->createSignedDownload($media->storage_disk, $media->storage_key, $expiresIn),
-            ];
-        })->all();
+        $urlsByBucket = [];
+        foreach ($pathsByBucket as $bucket => $paths) {
+            $urlsByBucket[$bucket] = $storage->createSignedDownloads($bucket, array_keys($paths), $expiresIn);
+        }
+
+        $items = collect($ids)->map(fn (string $id): array => [
+            'media_id' => $id,
+            'url' => $urlsByBucket[$mediaById->get($id)->storage_disk][$mediaById->get($id)->storage_key],
+        ])->all();
 
         return ApiResponse::success(['expires_in' => $expiresIn, 'items' => $items]);
     }

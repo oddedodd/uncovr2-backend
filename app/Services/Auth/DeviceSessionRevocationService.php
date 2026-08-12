@@ -34,7 +34,7 @@ final class DeviceSessionRevocationService
             'updated_at' => $now,
         ]);
         $this->revokeDependents($deviceSession, $now);
-        $this->sessionResolver->forgetPortalSession($deviceSession->web_session_id);
+        $this->sessionResolver->forgetSession($deviceSession);
 
         return true;
     }
@@ -74,7 +74,7 @@ final class DeviceSessionRevocationService
         ])->save();
 
         $this->revokeDependents($session, $now);
-        $this->sessionResolver->forgetPortalSession($session->web_session_id);
+        $this->sessionResolver->forgetSession($session);
     }
 
     private function revokeDependents(DeviceSession $session, \DateTimeInterface $now): void

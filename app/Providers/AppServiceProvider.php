@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Contracts\MediaStorage;
+use App\Database\PostgresTimeoutConnector;
 use App\Mail\Transport\ResendTransport;
 use App\Models\Artist;
 use App\Models\ArtistMembership;
@@ -20,6 +21,7 @@ use App\Policies\OrganizationArtistRelationshipPolicy;
 use App\Policies\OrganizationMembershipPolicy;
 use App\Policies\OrganizationPolicy;
 use App\Policies\ReleasePolicy;
+use App\Services\Authorization\ScopeAccess;
 use App\Services\Media\SupabaseMediaStorage;
 use App\Support\RequestPerformanceMetrics;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -41,6 +43,8 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->scoped(RequestPerformanceMetrics::class);
+        $this->app->scoped(ScopeAccess::class);
+        $this->app->bind('db.connector.pgsql', PostgresTimeoutConnector::class);
         $this->app->bind(MediaStorage::class, SupabaseMediaStorage::class);
     }
 
@@ -61,11 +65,37 @@ class AppServiceProvider extends ServiceProvider
         $this->configureResendTransport();
         $this->configureRateLimiting();
         $this->configurePerformanceMetrics();
+        $this->configureScopeAccessInvalidation();
         $this->validateEmailConfiguration();
         $this->validateQueueConfiguration();
 
         if ($this->app->isProduction()) {
             URL::forceScheme('https');
+        }
+    }
+
+    /**
+     * ScopeAccess memoizes authorization decisions for the duration of a request.
+     * Anything that can change those decisions must drop the memo, so that a
+     * revocation takes effect immediately rather than at the next request.
+     */
+    private function configureScopeAccessInvalidation(): void
+    {
+        $flush = function (): void {
+            if ($this->app->resolved(ScopeAccess::class)) {
+                $this->app->make(ScopeAccess::class)->flush();
+            }
+        };
+
+        foreach ([
+            Organization::class,
+            OrganizationMembership::class,
+            OrganizationArtistRelationship::class,
+            Artist::class,
+            ArtistMembership::class,
+        ] as $model) {
+            $model::saved($flush);
+            $model::deleted($flush);
         }
     }
 

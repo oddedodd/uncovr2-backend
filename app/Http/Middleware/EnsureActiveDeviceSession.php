@@ -47,6 +47,9 @@ final class EnsureActiveDeviceSession
             throw new AuthenticationException;
         }
 
+        // Only portal sessions slide their idle window on activity. Mobile idle
+        // expiry is owned by refresh token rotation, so it is deliberately not
+        // touched here.
         if (
             $session->client_type === 'portal'
             && $session->last_used_at->lessThanOrEqualTo($now->copy()->subMinutes(5))
@@ -57,7 +60,7 @@ final class EnsureActiveDeviceSession
                     ->addMinutes(config('authentication.portal_session_idle_ttl_minutes'))
                     ->min($session->absolute_expires_at),
             ])->save();
-            $this->sessionResolver->cachePortalSession($session);
+            $this->sessionResolver->cacheSession($session);
         }
 
         return $next($request);

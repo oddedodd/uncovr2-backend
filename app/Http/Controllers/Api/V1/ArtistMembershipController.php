@@ -24,7 +24,7 @@ final class ArtistMembershipController extends Controller
     {
         Gate::authorize('manageMembers', $artist);
 
-        return ApiResponse::success($artist->memberships()->with('user.profile')->orderBy('public_id')->get()->map(fn ($membership) => $this->resource($membership))->all());
+        return ApiResponse::success($artist->memberships()->with('user.profile')->orderBy('public_id')->get()->map(fn ($membership) => $this->resource($membership, $artist))->all());
     }
 
     public function store(StoreArtistMembershipRequest $request, Artist $artist, SecurityAuditLogger $audit): JsonResponse
@@ -40,7 +40,7 @@ final class ArtistMembershipController extends Controller
         ]);
         $audit->record('artist.membership_added', $request->user(), $request, metadata: ['artist_id' => $artist->public_id, 'membership_id' => $membership->public_id]);
 
-        return ApiResponse::success($this->resource($membership), 201);
+        return ApiResponse::success($this->resource($membership, $artist), 201);
     }
 
     public function update(UpdateArtistMembershipRequest $request, Artist $artist, ArtistMembership $membership, MembershipService $service): JsonResponse
@@ -48,7 +48,7 @@ final class ArtistMembershipController extends Controller
         $this->assertParent($artist, $membership);
         Gate::authorize('update', $membership);
 
-        return ApiResponse::success($this->resource($service->updateArtist($membership, $request->validated(), $request->user(), $request)));
+        return ApiResponse::success($this->resource($service->updateArtist($membership, $request->validated(), $request->user(), $request), $artist));
     }
 
     public function destroy(Request $request, Artist $artist, ArtistMembership $membership, MembershipService $service): JsonResponse
@@ -67,13 +67,13 @@ final class ArtistMembershipController extends Controller
         }
     }
 
-    private function resource(ArtistMembership $membership): array
+    private function resource(ArtistMembership $membership, Artist $artist): array
     {
-        $membership->loadMissing('user.profile', 'artist');
+        $membership->loadMissing('user.profile');
 
         return [
             'id' => $membership->public_id,
-            'artist_id' => $membership->artist->public_id,
+            'artist_id' => $artist->public_id,
             'user' => ['id' => $membership->user->public_id, 'email' => $membership->user->email, 'display_name' => $membership->user->profile?->display_name],
             'role' => $membership->role->value,
             'status' => $membership->status->value,

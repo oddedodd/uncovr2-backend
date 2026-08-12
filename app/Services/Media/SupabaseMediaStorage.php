@@ -73,6 +73,38 @@ final class SupabaseMediaStorage implements MediaStorage
         return rtrim($this->url(), '/').'/storage/v1'.(str_starts_with($signed, '/') ? '' : '/').$signed;
     }
 
+    public function createSignedDownloads(string $bucket, array $paths, int $expiresIn): array
+    {
+        $paths = array_values(array_unique($paths));
+
+        if ($paths === []) {
+            return [];
+        }
+
+        $response = $this->timed(fn () => $this->request()->post(
+            $this->endpoint('object/sign/'.rawurlencode($bucket)),
+            ['expiresIn' => $expiresIn, 'paths' => $paths],
+        ));
+        $this->ensureSuccessful($response->successful(), $response->body());
+
+        $signed = [];
+        foreach ($response->json() ?? [] as $entry) {
+            $path = $entry['path'] ?? null;
+            $url = $entry['signedURL'] ?? $entry['signedUrl'] ?? null;
+            if (is_string($path) && is_string($url)) {
+                $signed[$path] = rtrim($this->url(), '/').'/storage/v1'.(str_starts_with($url, '/') ? '' : '/').$url;
+            }
+        }
+
+        foreach ($paths as $path) {
+            if (! isset($signed[$path])) {
+                throw new RuntimeException("Supabase Storage did not return a signed download URL for {$path}.");
+            }
+        }
+
+        return $signed;
+    }
+
     public function copy(string $sourceBucket, string $sourcePath, string $destinationBucket, string $destinationPath): void
     {
         $response = $this->timed(fn () => $this->request()->post($this->endpoint('object/copy'), [

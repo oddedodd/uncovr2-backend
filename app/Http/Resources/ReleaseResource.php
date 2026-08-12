@@ -12,7 +12,7 @@ final class ReleaseResource extends JsonResource
     public function toArray(Request $request): array
     {
         $this->resource->loadMissing([
-            'artistLinks.artist.profile', 'editorAssignments.user.profile',
+            'organization', 'ownerArtist', 'artistLinks.artist.profile', 'editorAssignments.user',
             'pages.blocks', 'streamingLinks', 'credits.contributor', 'coverMedia',
         ]);
 
@@ -38,7 +38,7 @@ final class ReleaseResource extends JsonResource
             'artists' => $this->artistLinks->sortBy('position')->values()->map(fn ($link) => ['artist_id' => $link->artist->public_id, 'name' => $link->artist->profile->name, 'is_primary' => $link->is_primary, 'position' => $link->position])->all(),
             'editor_user_ids' => $this->editorAssignments->map(fn ($editor) => $editor->user->public_id)->all(),
             'pages' => $this->pages
-                ->map(fn ($page): array => (new ReleasePageResource($page))->resolve($request))
+                ->map(fn ($page): array => (new ReleasePageResource($page, $this->public_id))->resolve($request))
                 ->all(),
             'streaming_links' => $this->streamingLinks->map(fn ($link) => $this->link($link))->all(),
             'credits' => $this->credits->map(fn ($credit) => $this->credit($credit))->all(),

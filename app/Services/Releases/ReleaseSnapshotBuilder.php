@@ -13,7 +13,7 @@ final class ReleaseSnapshotBuilder
     {
         $release->loadMissing([
             'organization', 'ownerArtist', 'coverMedia', 'artistLinks.artist.profile',
-            'editorAssignments.user.profile', 'pages.blocks', 'streamingLinks', 'credits.contributor',
+            'editorAssignments.user', 'pages.blocks', 'streamingLinks', 'credits.contributor',
         ]);
         $snapshot = (new ReleaseResource($release))->resolve();
 
@@ -78,34 +78,48 @@ final class ReleaseSnapshotBuilder
     /** @return array<int, Media> */
     public function referencedMedia(Release $release): array
     {
+        $release->loadMissing(['coverMedia', 'pages.blocks', 'tracks.pages.blocks']);
+
         $ids = [];
         if ($release->coverMedia) {
             $ids[$release->coverMedia->public_id] = $release->coverMedia;
         }
         // Track-page media remains publishable only for the temporary legacy
         // listener snapshot. The portal builder itself exposes release pages only.
+        $candidates = [];
         foreach ($release->pages->concat($release->tracks->flatMap->pages)->flatMap->blocks as $block) {
-            $this->collectUlids($block->payload, $ids, $release);
+            $this->collectUlids($block->payload, $candidates);
+        }
+
+        $candidates = array_diff(array_keys($candidates), array_keys($ids));
+        if ($candidates !== []) {
+            foreach (Media::query()->whereIn('public_id', $candidates)->get() as $media) {
+                if ($media->organization_id === $release->organization_id && $media->artist_id === $release->artist_id) {
+                    $ids[$media->public_id] = $media;
+                }
+            }
         }
 
         return array_values($ids);
     }
 
-    private function collectUlids(mixed $value, array &$ids, Release $release): void
+    /**
+     * Collects every ULID-shaped string in a block payload. Resolution happens in
+     * one batched query afterwards rather than one query per candidate.
+     *
+     * @param  array<string, true>  $candidates
+     */
+    private function collectUlids(mixed $value, array &$candidates): void
     {
         if (is_array($value)) {
             foreach ($value as $nested) {
-                $this->collectUlids($nested, $ids, $release);
+                $this->collectUlids($nested, $candidates);
             }
 
             return;
         }
-        if (! is_string($value) || ! preg_match('/^[0-9A-HJKMNP-TV-Z]{26}$/i', $value) || isset($ids[$value])) {
-            return;
-        }
-        $media = Media::query()->where('public_id', $value)->first();
-        if ($media && $media->organization_id === $release->organization_id && $media->artist_id === $release->artist_id) {
-            $ids[$value] = $media;
+        if (is_string($value) && preg_match('/^[0-9A-HJKMNP-TV-Z]{26}$/i', $value)) {
+            $candidates[$value] = true;
         }
     }
 

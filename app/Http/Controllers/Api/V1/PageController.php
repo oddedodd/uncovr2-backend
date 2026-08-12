@@ -79,6 +79,6 @@ final class PageController extends Controller
 
     private function resource(Page $page): array
     {
-        return (new ReleasePageResource($page->loadMissing('blocks.page')))->resolve();
+        return (new ReleasePageResource($page->loadMissing('blocks')))->resolve();
     }
 }

@@ -6,6 +6,7 @@ use App\Models\DeviceSession;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class LogoutAndSessionsTest extends TestCase
@@ -168,6 +169,49 @@ class LogoutAndSessionsTest extends TestCase
         $this->withHeader('Origin', 'http://localhost:5173')
             ->withHeader('Referer', 'http://localhost:5173/account')
             ->getApi('/me')
+            ->assertOk()
+            ->assertJsonPath('data.id', $user->public_id);
+    }
+
+    public function test_bearer_device_session_is_served_from_cache_on_repeat_requests(): void
+    {
+        $user = $this->user();
+        $login = $this->login($user, 'iPhone');
+        $session = DeviceSession::query()->sole();
+
+        // Warm the cache, then prove the second request never reads device_sessions.
+        $this->getApi('/me', $this->bearer($login['access_token']))->assertOk();
+        $this->assertNotNull(Cache::get('auth:bearer-device-session:'.$session->getKey()));
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $this->getApi('/me', $this->bearer($login['access_token']))->assertOk();
+        $queries = DB::getQueryLog();
+        DB::disableQueryLog();
+
+        $touchedDeviceSessions = collect($queries)->contains(
+            fn (array $query): bool => str_contains($query['query'], 'device_sessions'),
+        );
+
+        $this->assertFalse(
+            $touchedDeviceSessions,
+            'A cached bearer device session must not be re-read from the database.',
+        );
+    }
+
+    public function test_corrupt_cached_bearer_device_session_falls_back_to_database(): void
+    {
+        $user = $this->user();
+        $login = $this->login($user, 'iPhone');
+        $session = DeviceSession::query()->sole();
+
+        Cache::put(
+            'auth:bearer-device-session:'.$session->getKey(),
+            (object) ['legacy_cached_model' => true],
+            now()->addMinute(),
+        );
+
+        $this->getApi('/me', $this->bearer($login['access_token']))
             ->assertOk()
             ->assertJsonPath('data.id', $user->public_id);
     }

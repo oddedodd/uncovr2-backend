@@ -15,6 +15,15 @@ interface MediaStorage
 
     public function createSignedDownload(string $bucket, string $path, int $expiresIn): string;
 
+    /**
+     * Signs many objects in one call. Signing per object costs one HTTPS round
+     * trip each, which does not scale for listing responses.
+     *
+     * @param  array<int, string>  $paths
+     * @return array<string, string> Map of object path to signed URL.
+     */
+    public function createSignedDownloads(string $bucket, array $paths, int $expiresIn): array;
+
     public function upload(string $bucket, string $path, string $body, string $mimeType): void;
 
     public function copy(string $sourceBucket, string $sourcePath, string $destinationBucket, string $destinationPath): void;

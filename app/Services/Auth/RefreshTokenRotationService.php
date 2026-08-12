@@ -16,6 +16,7 @@ final class RefreshTokenRotationService
     public function __construct(
         private readonly RefreshTokenGenerator $tokenGenerator,
         private readonly SecurityAuditLogger $auditLogger,
+        private readonly CurrentDeviceSessionResolver $sessionResolver,
     ) {}
 
     /** @return array<string, mixed>|null */
@@ -134,6 +135,7 @@ final class RefreshTokenRotationService
                 'last_used_at' => $now,
                 'idle_expires_at' => $refreshExpiresAt,
             ])->save();
+            $this->sessionResolver->cacheSession($session);
 
             $this->auditLogger->record(
                 'auth.token_refreshed',

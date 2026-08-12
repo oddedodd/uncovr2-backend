@@ -194,4 +194,60 @@ class ReleaseIndexSummaryTest extends TestCase
             'Release index should stay at auth plus one page query and batched artists/editors queries.',
         );
     }
+
+    public function test_release_detail_query_count_does_not_grow_with_page_count(): void
+    {
+        $admin = $this->domainUser('detail-admin@example.com');
+        $organization = $this->domainOrganization($admin, 'Detail Label');
+        $artist = $this->domainArtist($admin, 'Detail Artist');
+        $this->linkArtist($organization, $artist, $admin);
+        $release = $this->createOrganizationRelease($admin, $organization, $artist, [
+            'title' => 'Detail Release',
+        ]);
+        $this->actAsDomain($admin);
+
+        $addPage = function (int $position) use ($release): void {
+            $pageId = $this->postApi("/releases/{$release->public_id}/pages", [
+                'position' => $position,
+                'title' => "Page {$position}",
+            ])->assertCreated()->json('data.id');
+
+            $this->postApi("/pages/{$pageId}/blocks", [
+                'position' => 1,
+                'type' => 'heading',
+                'payload' => ['text' => "Heading {$position}", 'level' => 1],
+            ])->assertCreated();
+        };
+
+        $measure = function () use ($release): int {
+            DB::flushQueryLog();
+            DB::enableQueryLog();
+            $this->getApi("/releases/{$release->public_id}")->assertOk();
+            $count = count(DB::getQueryLog());
+            DB::disableQueryLog();
+
+            return $count;
+        };
+
+        $addPage(1);
+        $addPage(2);
+        $withTwoPages = $measure();
+
+        foreach ([3, 4, 5, 6] as $position) {
+            $addPage($position);
+        }
+        $withSixPages = $measure();
+
+        $this->assertSame(
+            $withTwoPages,
+            $withSixPages,
+            'Release detail must not issue additional queries per page or per content block.',
+        );
+
+        $this->assertLessThanOrEqual(
+            14,
+            $withTwoPages,
+            'Release detail should stay at auth plus the eager loaded relation set.',
+        );
+    }
 }

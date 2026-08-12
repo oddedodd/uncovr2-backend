@@ -22,7 +22,7 @@ final class ContentBlockController extends Controller
     {
         Gate::authorize('update', $page->owningRelease());
 
-        return ApiResponse::success($this->resource($service->create($page, $request->user(), $request->validated())), 201);
+        return ApiResponse::success($this->resource($service->create($page, $request->user(), $request->validated()), $page), 201);
     }
 
     public function update(UpdateContentBlockRequest $request, Page $page, ContentBlock $block, ContentBlockService $service): JsonResponse
@@ -30,7 +30,7 @@ final class ContentBlockController extends Controller
         $this->assertParent($page, $block);
         Gate::authorize('update', $page->owningRelease());
 
-        return ApiResponse::success($this->resource($service->update($block, $request->user(), $request->validated())));
+        return ApiResponse::success($this->resource($service->update($block, $request->user(), $request->validated()), $page));
     }
 
     public function destroy(Request $request, Page $page, ContentBlock $block, ReleaseActivityLogger $activity): JsonResponse
@@ -59,8 +59,8 @@ final class ContentBlockController extends Controller
         }
     }
 
-    private function resource(ContentBlock $block): array
+    private function resource(ContentBlock $block, Page $page): array
     {
-        return (new ContentBlockResource($block->loadMissing('page')))->resolve();
+        return (new ContentBlockResource($block, $page->public_id))->resolve();
     }
 }

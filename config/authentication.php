@@ -33,6 +33,17 @@ return [
         (int) env('AUTH_PORTAL_DEVICE_SESSION_CACHE_SECONDS', 30),
     ),
 
+    /*
+     * Bearer clients resolve their device session by id on every request. Revoking
+     * a mobile session deletes its access tokens, so authentication already fails
+     * before this cache is consulted; expiry is evaluated from the cached
+     * timestamps and therefore stays exact. Set to 0 to always hit the database.
+     */
+    'bearer_device_session_cache_seconds' => max(
+        0,
+        (int) env('AUTH_BEARER_DEVICE_SESSION_CACHE_SECONDS', 30),
+    ),
+
     'refresh_token_bytes' => 32,
 
     'refresh_token_prefix' => 'uncovr_refresh_',

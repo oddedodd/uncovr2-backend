@@ -40,12 +40,25 @@ new or restored environment.
 
 1. Put schema-breaking releases into the documented maintenance mode.
 2. Deploy application code and run migrations once.
-3. Run `php artisan queue:restart` so workers load the new release safely.
-4. Confirm exactly one scheduler and the intended worker pools are running.
-5. Run health, authentication, publishing, media and webhook smoke tests.
-6. Confirm label and artist onboarding routes are registered and that the
+3. Rebuild the framework caches so requests do not parse configuration and
+   routes on every boot:
+
+   ```bash
+   php artisan config:cache
+   php artisan route:cache
+   php artisan event:cache
+   ```
+
+   Run these after the new code is in place and after `.env` is final;
+   `config:cache` freezes environment values, so `env()` outside `config/`
+   returns null once it is active. Ensure OPcache is enabled in the deployed
+   PHP-FPM pool.
+4. Run `php artisan queue:restart` so workers load the new release safely.
+5. Confirm exactly one scheduler and the intended worker pools are running.
+6. Run health, authentication, publishing, media and webhook smoke tests.
+7. Confirm label and artist onboarding routes are registered and that the
    `artist_invitations` migration is present before enabling portal P3 flows.
-7. Confirm Resend delivery status and inspect queue/error metrics.
+8. Confirm Resend delivery status and inspect queue/error metrics.
 
 ## Rollback
 

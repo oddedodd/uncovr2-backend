@@ -69,6 +69,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Token Usage Tracking
+    |--------------------------------------------------------------------------
+    |
+    | Sanctum writes `last_used_at` to personal_access_tokens on every
+    | authenticated request. Nothing in this application reads that column;
+    | session activity is tracked on device_sessions instead, which
+    | EnsureActiveDeviceSession updates at most once every five minutes. The
+    | write is therefore disabled to keep one round trip off every request.
+    |
+    */
+
+    'last_used_at' => false,
+
+    /*
+    |--------------------------------------------------------------------------
     | Sanctum Middleware
     |--------------------------------------------------------------------------
     |

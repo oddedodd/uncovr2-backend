@@ -42,6 +42,9 @@ phase gate must be satisfied before work starts on the next product surface.
 - Composer 2.
 - Node.js 24 and npm for frontend assets.
 - Access to the active Supabase project when running the application locally.
+- Redis, with the `phpredis` extension. Cache and sessions default to Redis so
+  that the rate limiter does not spend a network round trip per request against
+  Supabase. Set `CACHE_STORE` and `SESSION_DRIVER` to `file` to run without it.
 
 ## Fresh checkout
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Authorization\ScopeAccess;
 use App\Support\RequestPerformanceMetrics;
 use Closure;
 use Illuminate\Http\Request;
@@ -17,10 +18,15 @@ final class AssignRequestId
 
     private const STARTED_AT = '_request_started_at';
 
-    public function __construct(private readonly RequestPerformanceMetrics $metrics) {}
+    public function __construct(
+        private readonly RequestPerformanceMetrics $metrics,
+        private readonly ScopeAccess $scopeAccess,
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
+        $this->scopeAccess->flush();
+
         if (! $request->is('api/*')) {
             return $next($request);
         }
