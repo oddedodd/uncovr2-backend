@@ -148,7 +148,32 @@ Run the automated email and registration coverage with:
 ```bash
 php artisan test tests/Feature/Auth/RegistrationTest.php tests/Feature/Auth/EmailVerificationTest.php
 php artisan test tests/Feature/Domain/OrganizationInvitationTest.php tests/Feature/Domain/OnboardingWorkflowTest.php
+php artisan test tests/Feature/Domain/ReleaseEditorAssignmentTest.php
 ```
+
+## Transactional templates
+
+| Template | Resend tag | Trigger |
+| --- | --- | --- |
+| `mail.auth.verify-email` | `email-verification` | Registration and resend |
+| `mail.auth.reset-password` | `password-reset` | Forgotten password |
+| `mail.organizations.invitation` | `organization-invitation` | Label invitation and resend |
+| `mail.artists.invitation` | `artist-invitation` | Artist invitation and resend |
+| `mail.releases.editor-assigned` | `release-editor-assignment` | A new release editor assignment |
+
+Every template is queued on `MAIL_QUEUE`, dispatched after the surrounding
+transaction commits, and carries an `X-Uncovr-Resend-Idempotency-Key`. The
+invitation and release-assignment notifications are additionally
+`ShouldBeEncrypted`, because they carry a token or scope identity on the queue;
+the two auth templates derive their content from the notifiable and are not.
+
+The release assignment key is derived from the `release_editors` row id, so
+retries of one grant dedupe while a genuine remove-then-re-add sends again.
+
+**Nothing is delivered unless a queue worker is consuming that queue.**
+`composer dev` starts one alongside the dev server; a bare
+`php artisan queue:work` listens on `default` only and will silently leave
+`emails` untouched.
 
 The verification URL is signed, expires after 60 minutes by default, and
 includes the current verification version. A resend increments the version,

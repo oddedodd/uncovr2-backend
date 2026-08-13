@@ -13,11 +13,16 @@ final class ReleaseSnapshotBuilder
     {
         $release->loadMissing([
             'organization', 'ownerArtist', 'coverMedia', 'artistLinks.artist.profile',
-            'editorAssignments.user', 'pages.blocks', 'streamingLinks', 'credits.contributor',
+            'editorAssignments.user.profile', 'pages.blocks', 'streamingLinks', 'credits.contributor',
         ]);
         $snapshot = (new ReleaseResource($release))->resolve();
 
-        return Arr::except($snapshot, ['editor_user_ids', 'created_at', 'updated_at']);
+        // Editor identities and per-viewer capability flags are never part of
+        // published content, and must stay out of the approval fingerprint:
+        // granting or revoking an editor would otherwise invalidate an already
+        // approved release. ReleaseResource only emits permissions when a viewer
+        // is passed, so that key is excluded defensively rather than expectantly.
+        return Arr::except($snapshot, ['editor_user_ids', 'editors', 'permissions', 'created_at', 'updated_at']);
     }
 
     /**

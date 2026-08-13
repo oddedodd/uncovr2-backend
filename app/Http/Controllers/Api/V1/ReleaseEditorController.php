@@ -7,6 +7,7 @@ use App\Http\Requests\Api\V1\Releases\StoreReleaseEditorRequest;
 use App\Http\Responses\ApiResponse;
 use App\Models\Release;
 use App\Models\User;
+use App\Notifications\Releases\ReleaseEditorAssignedNotification;
 use App\Services\Releases\ReleaseActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,6 +26,14 @@ final class ReleaseEditorController extends Controller
         $assignment = $release->editorAssignments()->firstOrCreate(['user_id' => $user->getKey()], ['granted_by_user_id' => $request->user()->getKey()]);
         if ($assignment->wasRecentlyCreated) {
             $activity->record($release, $request->user(), 'release.editor_added', $user);
+            $release->loadMissing('organization.profile', 'ownerArtist.profile');
+            $user->notify(new ReleaseEditorAssignedNotification(
+                $release->public_id,
+                $release->title,
+                $release->organization?->profile?->name ?? $release->ownerArtist?->profile?->name ?? '',
+                $request->user()->profile?->display_name,
+                $assignment->getKey(),
+            ));
         }
 
         return ApiResponse::success(['user_id' => $user->public_id], $assignment->wasRecentlyCreated ? 201 : 200);

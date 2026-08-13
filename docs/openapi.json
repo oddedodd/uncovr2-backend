@@ -2505,6 +2505,14 @@
                         }
                     },
                     {
+                        "name": "filter[assigned_to_me]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
                         "name": "page[size]",
                         "in": "query",
                         "required": false,
@@ -2649,7 +2657,9 @@
                                             "required": [
                                                 "cover_media_id",
                                                 "cover_media",
-                                                "pages"
+                                                "pages",
+                                                "editors",
+                                                "permissions"
                                             ],
                                             "properties": {
                                                 "cover_media_id": {
@@ -2674,6 +2684,15 @@
                                                     "items": {
                                                         "$ref": "#/components/schemas/ReleasePage"
                                                     }
+                                                },
+                                                "editors": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/ReleaseEditor"
+                                                    }
+                                                },
+                                                "permissions": {
+                                                    "$ref": "#/components/schemas/ReleasePermissions"
                                                 }
                                             }
                                         }
@@ -6771,6 +6790,14 @@
                         }
                     },
                     {
+                        "name": "filter[assigned_to_me]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
                         "name": "page[size]",
                         "in": "query",
                         "required": false,
@@ -6855,7 +6882,9 @@
                                             "required": [
                                                 "cover_media_id",
                                                 "cover_media",
-                                                "pages"
+                                                "pages",
+                                                "editors",
+                                                "permissions"
                                             ],
                                             "properties": {
                                                 "cover_media_id": {
@@ -6880,6 +6909,15 @@
                                                     "items": {
                                                         "$ref": "#/components/schemas/ReleasePage"
                                                     }
+                                                },
+                                                "editors": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/ReleaseEditor"
+                                                    }
+                                                },
+                                                "permissions": {
+                                                    "$ref": "#/components/schemas/ReleasePermissions"
                                                 }
                                             }
                                         }
@@ -7133,7 +7171,9 @@
                                             "required": [
                                                 "cover_media_id",
                                                 "cover_media",
-                                                "pages"
+                                                "pages",
+                                                "editors",
+                                                "permissions"
                                             ],
                                             "properties": {
                                                 "cover_media_id": {
@@ -7158,6 +7198,15 @@
                                                     "items": {
                                                         "$ref": "#/components/schemas/ReleasePage"
                                                     }
+                                                },
+                                                "editors": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/ReleaseEditor"
+                                                    }
+                                                },
+                                                "permissions": {
+                                                    "$ref": "#/components/schemas/ReleasePermissions"
                                                 }
                                             }
                                         }
@@ -9439,6 +9488,59 @@
                         "items": {
                             "$ref": "#/components/schemas/ContentBlock"
                         }
+                    }
+                }
+            },
+            "ReleaseEditor": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "user_id",
+                    "display_name"
+                ],
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "pattern": "^[0-9A-Za-z]{26}$"
+                    },
+                    "display_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                }
+            },
+            "ReleasePermissions": {
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Role capability for the requesting user, not state-machine validity. A true flag means the user is allowed to attempt the action; the service still rejects illegal transitions.",
+                "required": [
+                    "can_update",
+                    "can_submit",
+                    "can_delete",
+                    "can_approve",
+                    "can_publish",
+                    "can_manage_editors"
+                ],
+                "properties": {
+                    "can_update": {
+                        "type": "boolean"
+                    },
+                    "can_submit": {
+                        "type": "boolean"
+                    },
+                    "can_delete": {
+                        "type": "boolean"
+                    },
+                    "can_approve": {
+                        "type": "boolean"
+                    },
+                    "can_publish": {
+                        "type": "boolean"
+                    },
+                    "can_manage_editors": {
+                        "type": "boolean"
                     }
                 }
             },

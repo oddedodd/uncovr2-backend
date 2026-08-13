@@ -40,10 +40,42 @@ All routes are authenticated below `/api/v1`:
 | Update block | `PATCH /pages/{page}/blocks/{block}` | `update` owning release |
 | Delete block | `DELETE /pages/{page}/blocks/{block}` | `update` owning release |
 | Block history | `GET /pages/{page}/blocks/{block}/versions` | `view` owning release |
+| Assign editor | `POST /releases/{release}/editors` | `manageEditors` release |
+| Revoke editor | `DELETE /releases/{release}/editors/{user}` | `manageEditors` release |
 
 Laravel `ReleasePolicy` is the authorization boundary. A nested block route
 also verifies that the block belongs to the page in the URL. Hiding controls in
 the portal is never treated as authorization.
+
+## Editors and capability flags
+
+Every scope member may read a draft, but only scope administrators and
+explicitly assigned release editors may write to it. Assignment is per release:
+`POST /releases/{release}/editors` takes the target user's ULID, is idempotent
+(`201` on a new grant, `200` when the assignment already exists), and only a new
+grant emails the assigned user. Creating a release assigns its creator.
+
+The release detail and summary payloads carry both the assignment list and the
+requesting user's capabilities:
+
+```json
+{
+  "editors": [{ "user_id": "01USER_ULID", "display_name": "Ada Artist" }],
+  "permissions": {
+    "can_update": true, "can_submit": true, "can_delete": true,
+    "can_approve": false, "can_publish": false, "can_manage_editors": false
+  }
+}
+```
+
+`editor_user_ids` remains in both payloads for compatibility and is
+**deprecated** in favour of `editors`. Editor email addresses are deliberately
+absent: the summary is readable by every scope member, while emails are exposed
+only behind `manageMembers` on `GET /artists/{artist}/members`.
+
+`GET /releases?filter[assigned_to_me]=1` narrows the listing to explicit
+assignments. It means exactly that — an administrator who was never assigned
+gets an empty list even though they may edit every release in the scope.
 
 Page create payload and response:
 

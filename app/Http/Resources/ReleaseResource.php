@@ -9,10 +9,21 @@ final class ReleaseResource extends JsonResource
 {
     public static $wrap = null;
 
+    /**
+     * Permissions are opt-in because this resource also feeds
+     * ReleaseSnapshotBuilder, which runs without an authenticated viewer.
+     *
+     * @param  array<string, bool>|null  $permissions
+     */
+    public function __construct(mixed $resource, private readonly ?array $permissions = null)
+    {
+        parent::__construct($resource);
+    }
+
     public function toArray(Request $request): array
     {
         $this->resource->loadMissing([
-            'organization', 'ownerArtist', 'artistLinks.artist.profile', 'editorAssignments.user',
+            'organization', 'ownerArtist', 'artistLinks.artist.profile', 'editorAssignments.user.profile',
             'pages.blocks', 'streamingLinks', 'credits.contributor', 'coverMedia',
         ]);
 
@@ -36,7 +47,13 @@ final class ReleaseResource extends JsonResource
                 'publication_version' => $this->publication_version,
             ],
             'artists' => $this->artistLinks->sortBy('position')->values()->map(fn ($link) => ['artist_id' => $link->artist->public_id, 'name' => $link->artist->profile->name, 'is_primary' => $link->is_primary, 'position' => $link->position])->all(),
+            // Deprecated in favour of `editors`; kept until the portal migrates.
             'editor_user_ids' => $this->editorAssignments->map(fn ($editor) => $editor->user->public_id)->all(),
+            'editors' => $this->editorAssignments->map(fn ($editor): array => [
+                'user_id' => $editor->user->public_id,
+                'display_name' => $editor->user->profile?->display_name,
+            ])->all(),
+            ...($this->permissions !== null ? ['permissions' => $this->permissions] : []),
             'pages' => $this->pages
                 ->map(fn ($page): array => (new ReleasePageResource($page, $this->public_id))->resolve($request))
                 ->all(),

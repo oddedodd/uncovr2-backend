@@ -4,12 +4,25 @@ namespace Tests\Feature\Domain;
 
 use App\Enums\ArtistRole;
 use App\Enums\OrganizationRole;
+use App\Models\Release;
+use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 use Tests\Feature\Domain\Concerns\BuildsReleaseDomain;
 use Tests\TestCase;
 
 class ReleaseAuthorizationTest extends TestCase
 {
     use BuildsReleaseDomain;
+
+    /** Capability flag name => the Gate ability it must mirror. */
+    private const CAPABILITY_ABILITIES = [
+        'can_update' => 'update',
+        'can_submit' => 'submit',
+        'can_delete' => 'delete',
+        'can_approve' => 'approve',
+        'can_publish' => 'publish',
+        'can_manage_editors' => 'manageEditors',
+    ];
 
     public function test_scope_members_can_read_but_only_admins_and_explicit_editors_can_modify(): void
     {
@@ -95,6 +108,53 @@ class ReleaseAuthorizationTest extends TestCase
             'release_date' => null, 'upc' => null, 'cover_media_id' => null,
         ]), 422, 'validation_failed');
         $this->assertDatabaseCount('releases', 0);
+    }
+
+    public function test_release_permissions_block_mirrors_the_policy_for_every_ability(): void
+    {
+        $admin = $this->domainUser('permissions-admin@example.com');
+        $editor = $this->domainUser('permissions-editor@example.com');
+        $viewer = $this->domainUser('permissions-viewer@example.com');
+        $superadmin = $this->domainUser('permissions-super@example.com', true);
+        $organization = $this->domainOrganization($admin);
+        $this->addLabelMember($organization, $editor, OrganizationRole::User);
+        $this->addLabelMember($organization, $viewer, OrganizationRole::User);
+        $artist = $this->domainArtist($admin);
+        $this->linkArtist($organization, $artist, $admin);
+        $release = $this->createOrganizationRelease($admin, $organization, $artist);
+
+        $this->actAsDomain($admin);
+        $this->postApi("/releases/{$release->public_id}/editors", ['user_id' => $editor->public_id])->assertCreated();
+
+        // The status gate is half of ReleasePolicy::update, so every actor is
+        // checked in an editable and a non-editable status.
+        foreach (['draft', 'unpublished', 'review', 'published', 'archived'] as $status) {
+            $release->forceFill(['status' => $status])->save();
+
+            foreach ([$admin, $editor, $viewer, $superadmin] as $user) {
+                $this->assertPermissionsMirrorPolicy($user, $release, $status);
+            }
+        }
+    }
+
+    private function assertPermissionsMirrorPolicy(User $user, Release $release, string $status): void
+    {
+        $this->actAsDomain($user);
+        $expected = [];
+        foreach (self::CAPABILITY_ABILITIES as $flag => $ability) {
+            $expected[$flag] = Gate::forUser($user)->allows($ability, $release->fresh());
+        }
+
+        $detail = $this->getApi("/releases/{$release->public_id}")->assertOk();
+        $summary = collect($this->getApi('/releases')->assertOk()->json('data'))
+            ->firstWhere('id', $release->public_id);
+        $this->assertNotNull($summary, "Release should be listed for {$user->email} in status {$status}.");
+
+        foreach ($expected as $flag => $allowed) {
+            $context = "{$flag} for {$user->email} in status {$status}";
+            $this->assertSame($allowed, $detail->json("data.permissions.{$flag}"), "Detail {$context}");
+            $this->assertSame($allowed, $summary['permissions'][$flag], "Summary {$context}");
+        }
     }
 
     public function test_superadmin_can_read_and_modify_every_release(): void

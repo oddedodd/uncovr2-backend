@@ -12,6 +12,7 @@ use App\Http\Resources\ReleaseSummaryResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Release;
 use App\Services\Api\CursorPagination;
+use App\Services\Authorization\ReleaseCapabilities;
 use App\Services\Releases\ReleaseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ use Illuminate\Support\Facades\Gate;
 
 final class ReleaseController extends Controller
 {
-    public function index(ReleaseIndexRequest $request, CursorPagination $pagination): JsonResponse
+    public function index(ReleaseIndexRequest $request, CursorPagination $pagination, ReleaseCapabilities $capabilities): JsonResponse
     {
         $query = Release::query()
             ->select([
@@ -96,6 +97,18 @@ final class ReleaseController extends Controller
             });
         }
 
+        // Explicit release_editors assignments only. An administrator who never
+        // assigned themselves gets an empty list, which is the intended meaning:
+        // this is "assigned to me", not "everything I may edit".
+        if ($request->boolean('filter.assigned_to_me')) {
+            $userId = $request->user()->getKey();
+            $query->whereExists(fn ($exists) => $exists
+                ->selectRaw('1')
+                ->from('release_editors')
+                ->whereColumn('release_editors.release_id', 'releases.id')
+                ->where('release_editors.user_id', $userId));
+        }
+
         if ($request->filled('filter.owner_type') || $request->filled('filter.owner_id')) {
             $ownerType = $request->string('filter.owner_type')->toString();
             $ownerId = $request->string('filter.owner_id')->toString();
@@ -114,39 +127,43 @@ final class ReleaseController extends Controller
         $page = $pagination->page($query, $request);
         $releaseIds = $page['items']->map(fn (Release $release): int => $release->getKey())->all();
         $artists = $this->summaryArtists($releaseIds);
-        $editorUserIds = $this->summaryEditorUserIds($releaseIds);
+        $editors = $this->summaryEditors($releaseIds);
+        $permissions = $capabilities->forListing($request->user(), $page['items'], $editors);
 
         return response()->json([
             'data' => $page['items']
                 ->map(fn (Release $release): array => (new ReleaseSummaryResource(
                     $release,
                     $artists[$release->getKey()] ?? [],
-                    $editorUserIds[$release->getKey()] ?? [],
+                    $editors[$release->getKey()] ?? [],
+                    $permissions[$release->getKey()] ?? [],
                 ))->resolve($request))
                 ->all(),
             'meta' => $page['meta'],
         ]);
     }
 
-    public function store(StoreReleaseRequest $request, ReleaseService $service): JsonResponse
+    public function store(StoreReleaseRequest $request, ReleaseService $service, ReleaseCapabilities $capabilities): JsonResponse
     {
         $release = $service->create($request->user(), $request->validated())->load($this->includes());
 
-        return ApiResponse::success((new ReleaseResource($release))->resolve(), 201);
+        return ApiResponse::success((new ReleaseResource($release, $capabilities->forRelease($request->user(), $release)))->resolve(), 201);
     }
 
-    public function show(Release $release): JsonResponse
+    public function show(Request $request, Release $release, ReleaseCapabilities $capabilities): JsonResponse
     {
         Gate::authorize('view', $release);
+        $release->loadMissing($this->includes());
 
-        return ApiResponse::success((new ReleaseResource($release->loadMissing($this->includes())))->resolve());
+        return ApiResponse::success((new ReleaseResource($release, $capabilities->forRelease($request->user(), $release)))->resolve());
     }
 
-    public function update(UpdateReleaseRequest $request, Release $release, ReleaseService $service): JsonResponse
+    public function update(UpdateReleaseRequest $request, Release $release, ReleaseService $service, ReleaseCapabilities $capabilities): JsonResponse
     {
         Gate::authorize('update', $release);
+        $updated = $service->update($release, $request->user(), $request->validated())->load($this->includes());
 
-        return ApiResponse::success((new ReleaseResource($service->update($release, $request->user(), $request->validated())->load($this->includes())))->resolve());
+        return ApiResponse::success((new ReleaseResource($updated, $capabilities->forRelease($request->user(), $updated)))->resolve());
     }
 
     public function destroy(Request $request, Release $release, ReleaseService $service): JsonResponse
@@ -159,7 +176,7 @@ final class ReleaseController extends Controller
 
     private function includes(): array
     {
-        return ['organization', 'ownerArtist', 'coverMedia', 'artistLinks.artist.profile', 'editorAssignments.user', 'pages.blocks', 'streamingLinks', 'credits.contributor'];
+        return ['organization', 'ownerArtist', 'coverMedia', 'artistLinks.artist.profile', 'editorAssignments.user.profile', 'pages.blocks', 'streamingLinks', 'credits.contributor'];
     }
 
     /**
@@ -198,9 +215,9 @@ final class ReleaseController extends Controller
 
     /**
      * @param  array<int, int>  $releaseIds
-     * @return array<int, array<int, string>>
+     * @return array<int, array<int, array{user_id: string, display_name: string|null}>>
      */
-    private function summaryEditorUserIds(array $releaseIds): array
+    private function summaryEditors(array $releaseIds): array
     {
         if ($releaseIds === []) {
             return [];
@@ -208,12 +225,20 @@ final class ReleaseController extends Controller
 
         return DB::table('release_editors')
             ->join('users', 'users.id', '=', 'release_editors.user_id')
+            ->leftJoin('user_profiles', 'user_profiles.user_id', '=', 'users.id')
             ->whereIn('release_editors.release_id', $releaseIds)
             ->orderBy('release_editors.id')
-            ->get(['release_editors.release_id', 'users.public_id'])
+            ->get([
+                'release_editors.release_id',
+                'users.public_id as user_id',
+                'user_profiles.display_name',
+            ])
             ->groupBy('release_id')
             ->map(fn (Collection $rows): array => $rows
-                ->map(fn (object $row): string => $row->public_id)
+                ->map(fn (object $row): array => [
+                    'user_id' => $row->user_id,
+                    'display_name' => $row->display_name,
+                ])
                 ->all())
             ->all();
     }

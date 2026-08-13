@@ -70,4 +70,17 @@ trait BuildsReleaseDomain
 
         return Release::query()->where('public_id', $id)->sole();
     }
+
+    protected function createArtistRelease(User $actor, Artist $artist, array $overrides = []): Release
+    {
+        $this->actAsDomain($actor);
+        $id = $this->postApi('/releases', [...[
+            'owner_type' => 'artist', 'owner_id' => $artist->public_id,
+            'primary_artist_id' => $artist->public_id, 'type' => 'album',
+            'title' => 'Test Artist Release', 'subtitle' => null, 'description' => null,
+            'release_date' => null, 'upc' => null, 'cover_media_id' => null,
+        ], ...$overrides])->assertCreated()->json('data.id');
+
+        return Release::query()->where('public_id', $id)->sole();
+    }
 }

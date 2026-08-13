@@ -91,6 +91,29 @@ class OpenApiGenerator
                             'blocks' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/ContentBlock']],
                         ],
                     ],
+                    'ReleaseEditor' => [
+                        'type' => 'object',
+                        'additionalProperties' => false,
+                        'required' => ['user_id', 'display_name'],
+                        'properties' => [
+                            'user_id' => $this->ulidSchema(),
+                            'display_name' => ['type' => ['string', 'null']],
+                        ],
+                    ],
+                    'ReleasePermissions' => [
+                        'type' => 'object',
+                        'additionalProperties' => false,
+                        'description' => 'Role capability for the requesting user, not state-machine validity. A true flag means the user is allowed to attempt the action; the service still rejects illegal transitions.',
+                        'required' => ['can_update', 'can_submit', 'can_delete', 'can_approve', 'can_publish', 'can_manage_editors'],
+                        'properties' => [
+                            'can_update' => ['type' => 'boolean'],
+                            'can_submit' => ['type' => 'boolean'],
+                            'can_delete' => ['type' => 'boolean'],
+                            'can_approve' => ['type' => 'boolean'],
+                            'can_publish' => ['type' => 'boolean'],
+                            'can_manage_editors' => ['type' => 'boolean'],
+                        ],
+                    ],
                     'Error' => [
                         'type' => 'object',
                         'required' => ['message'],
@@ -184,6 +207,7 @@ class OpenApiGenerator
                 $this->queryParameter('filter[artist_id]', ['type' => 'string', 'pattern' => '^[0-9A-Za-z]{26}$']),
                 $this->queryParameter('filter[owner_type]', ['type' => 'string', 'enum' => ['organization', 'artist']]),
                 $this->queryParameter('filter[owner_id]', ['type' => 'string', 'pattern' => '^[0-9A-Za-z]{26}$']),
+                $this->queryParameter('filter[assigned_to_me]', ['type' => 'boolean']),
             ],
             default => [],
         };
@@ -604,11 +628,13 @@ class OpenApiGenerator
                     'data' => [
                         'type' => 'object',
                         'additionalProperties' => true,
-                        'required' => ['cover_media_id', 'cover_media', 'pages'],
+                        'required' => ['cover_media_id', 'cover_media', 'pages', 'editors', 'permissions'],
                         'properties' => [
                             'cover_media_id' => $this->nullableUlidSchema(),
                             'cover_media' => ['anyOf' => [['$ref' => '#/components/schemas/MediaReference'], ['type' => 'null']]],
                             'pages' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/ReleasePage']],
+                            'editors' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/ReleaseEditor']],
+                            'permissions' => ['$ref' => '#/components/schemas/ReleasePermissions'],
                         ],
                     ],
                 ],

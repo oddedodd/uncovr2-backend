@@ -15,8 +15,9 @@ final class ReleaseIndexRequest extends StrictFormRequest
     public function rules(): array
     {
         return [
-            'filter' => ['sometimes', 'array:search,status,type,artist_id,owner_type,owner_id'],
+            'filter' => ['sometimes', 'array:search,status,type,artist_id,owner_type,owner_id,assigned_to_me'],
             'filter.search' => ['sometimes', 'string', 'min:2', 'max:100'],
+            'filter.assigned_to_me' => ['sometimes', 'boolean'],
             'filter.status' => ['sometimes', 'string', Rule::enum(ReleaseStatus::class)],
             'filter.type' => ['sometimes', 'string', Rule::enum(ReleaseType::class)],
             'filter.artist_id' => ['sometimes', 'string', 'size:26'],

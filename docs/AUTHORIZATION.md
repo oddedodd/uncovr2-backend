@@ -62,3 +62,20 @@ Only scope administrators and explicitly assigned release editors may modify
 them. Creator attribution alone never bypasses a revoked membership. An
 artist-owned release also follows active organization-to-artist relationships,
 so ending the managing relationship removes the label's derived access.
+
+Scope administrators grant and revoke those assignments through
+`POST`/`DELETE /releases/{release}/editors`. A new grant emails the assigned
+user; revocation is recorded in the release activity log and sends nothing.
+
+## Capability flags
+
+Release payloads include a `permissions` block so the portal never has to
+reimplement the policy. Each flag mirrors the matching `Gate` ability for the
+requesting user, superadmins included, and `ReleaseAuthorizationTest` asserts
+that equivalence for every ability and release status.
+
+The flags express **role capability, not state-machine validity**: `can_submit`
+means the user is allowed to submit, never that the release is complete enough
+to pass validation. Services still reject illegal transitions, so a client must
+handle a rejection even when the flag is true. As everywhere else, hiding a
+control in the portal is a usability choice and never authorization.

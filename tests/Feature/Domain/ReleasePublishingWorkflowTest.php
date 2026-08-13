@@ -85,6 +85,29 @@ class ReleasePublishingWorkflowTest extends TestCase
         $event->update(['event_type' => 'release.tampered']);
     }
 
+    public function test_publication_fingerprint_ignores_permissions_and_editor_identities(): void
+    {
+        [$release, $admin, $editor] = $this->releaseContext();
+        $this->actAsDomain($editor);
+        $this->postApi("/releases/{$release->public_id}/submit", ['note' => 'Ready'])->assertCreated();
+
+        $this->actAsDomain($admin);
+        $this->postApi("/releases/{$release->public_id}/approve", ['note' => 'Approved'])->assertOk();
+
+        // Granting an editor after approval must not invalidate the approved
+        // fingerprint, and must not leak editor identities into the snapshot.
+        $latecomer = $this->domainUser('publish-latecomer@example.com');
+        $this->addLabelMember($release->organization, $latecomer);
+        $this->postApi("/releases/{$release->public_id}/editors", ['user_id' => $latecomer->public_id])->assertCreated();
+
+        $this->postApi("/releases/{$release->public_id}/publish")->assertOk()->assertJsonPath('data.status', 'published');
+
+        $snapshot = ReleasePublication::query()->where('release_id', $release->id)->sole()->snapshot;
+        $this->assertArrayNotHasKey('editor_user_ids', $snapshot);
+        $this->assertArrayNotHasKey('editors', $snapshot);
+        $this->assertArrayNotHasKey('permissions', $snapshot);
+    }
+
     private function releaseContext(): array
     {
         $admin = $this->domainUser('publish-admin@example.com');

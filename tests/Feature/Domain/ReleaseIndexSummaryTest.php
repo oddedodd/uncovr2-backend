@@ -189,9 +189,9 @@ class ReleaseIndexSummaryTest extends TestCase
             ->assertJsonMissingPath('data.0.credits');
 
         $this->assertLessThanOrEqual(
-            4,
+            5,
             count(DB::getQueryLog()),
-            'Release index should stay at auth plus one page query and batched artists/editors queries.',
+            'Release index should stay at auth plus one page query, batched artists/editors queries and one batched manage-scope query.',
         );
     }
 
@@ -245,9 +245,9 @@ class ReleaseIndexSummaryTest extends TestCase
         );
 
         $this->assertLessThanOrEqual(
-            14,
+            15,
             $withTwoPages,
-            'Release detail should stay at auth plus the eager loaded relation set.',
+            'Release detail should stay at auth plus the eager loaded relation set, including editor profiles for display names.',
         );
     }
 }

@@ -11,12 +11,14 @@ final class ReleaseSummaryResource extends JsonResource
 
     /**
      * @param  array<int, array{artist_id: string, name: string, is_primary: bool, position: int}>  $artists
-     * @param  array<int, string>  $editorUserIds
+     * @param  array<int, array{user_id: string, display_name: string|null}>  $editors
+     * @param  array<string, bool>  $permissions
      */
     public function __construct(
         mixed $resource,
         private readonly array $artists = [],
-        private readonly array $editorUserIds = [],
+        private readonly array $editors = [],
+        private readonly array $permissions = [],
     ) {
         parent::__construct($resource);
     }
@@ -48,7 +50,10 @@ final class ReleaseSummaryResource extends JsonResource
                 ]
                 : null,
             'artists' => $this->artists,
-            'editor_user_ids' => $this->editorUserIds,
+            // Deprecated in favour of `editors`; kept until the portal migrates.
+            'editor_user_ids' => array_column($this->editors, 'user_id'),
+            'editors' => $this->editors,
+            'permissions' => $this->permissions,
             'created_at' => $this->created_at->utc()->format('Y-m-d\TH:i:s.v\Z'),
             'updated_at' => $this->updated_at->utc()->format('Y-m-d\TH:i:s.v\Z'),
         ];

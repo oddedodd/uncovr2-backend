@@ -8,6 +8,7 @@ use App\Enums\OrganizationRole;
 use App\Models\Artist;
 use App\Models\Organization;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 final class ScopeAccess
 {
@@ -85,6 +86,78 @@ final class ScopeAccess
     {
         return $this->hasArtistRole($user, $artist, ArtistRole::Admin)
             || $this->hasRelatedOrganizationRole($user, $artist, OrganizationRole::Admin);
+    }
+
+    /**
+     * Batched equivalent of canManageOrganization()/canManageArtist() across many
+     * owners at once. Equivalent to calling those per owner, but as a single
+     * round trip instead of up to three queries per owner. Used by listing
+     * endpoints, which must not run per-row authorization queries.
+     *
+     * @param  array<int, int>  $organizationKeys
+     * @param  array<int, int>  $artistKeys
+     * @return array{organizations: array<int, true>, artists: array<int, true>}
+     */
+    public function manageableOwners(User $user, array $organizationKeys, array $artistKeys): array
+    {
+        $organizationKeys = array_values(array_unique($organizationKeys));
+        $artistKeys = array_values(array_unique($artistKeys));
+
+        if ($organizationKeys === [] && $artistKeys === []) {
+            return ['organizations' => [], 'artists' => []];
+        }
+
+        $queries = [];
+
+        if ($organizationKeys !== []) {
+            $queries[] = DB::table('organization_memberships')
+                ->join('organizations', 'organizations.id', '=', 'organization_memberships.organization_id')
+                ->whereIn('organization_memberships.organization_id', $organizationKeys)
+                ->where('organization_memberships.user_id', $user->getKey())
+                ->where('organization_memberships.status', MembershipStatus::Active->value)
+                ->where('organization_memberships.role', OrganizationRole::Admin->value)
+                ->where('organizations.status', 'active')
+                ->selectRaw("'organization' as scope, organization_memberships.organization_id as owner_id");
+        }
+
+        if ($artistKeys !== []) {
+            $queries[] = DB::table('artist_memberships')
+                ->join('artists', 'artists.id', '=', 'artist_memberships.artist_id')
+                ->whereIn('artist_memberships.artist_id', $artistKeys)
+                ->where('artist_memberships.user_id', $user->getKey())
+                ->where('artist_memberships.status', MembershipStatus::Active->value)
+                ->where('artist_memberships.role', ArtistRole::Admin->value)
+                ->where('artists.status', 'active')
+                ->selectRaw("'artist' as scope, artist_memberships.artist_id as owner_id");
+
+            // Derived label access: an active managing relationship to an active
+            // organization where the user is an administrator.
+            $queries[] = DB::table('organization_artist_relationships')
+                ->join('artists', 'artists.id', '=', 'organization_artist_relationships.artist_id')
+                ->join('organizations', 'organizations.id', '=', 'organization_artist_relationships.organization_id')
+                ->join('organization_memberships', 'organization_memberships.organization_id', '=', 'organizations.id')
+                ->whereIn('organization_artist_relationships.artist_id', $artistKeys)
+                ->whereNull('organization_artist_relationships.ended_at')
+                ->where('artists.status', 'active')
+                ->where('organizations.status', 'active')
+                ->where('organization_memberships.user_id', $user->getKey())
+                ->where('organization_memberships.status', MembershipStatus::Active->value)
+                ->where('organization_memberships.role', OrganizationRole::Admin->value)
+                ->selectRaw("'artist' as scope, organization_artist_relationships.artist_id as owner_id");
+        }
+
+        $query = array_shift($queries);
+        foreach ($queries as $union) {
+            $query->unionAll($union);
+        }
+
+        $manageable = ['organizations' => [], 'artists' => []];
+        foreach ($query->get() as $row) {
+            $bucket = $row->scope === 'organization' ? 'organizations' : 'artists';
+            $manageable[$bucket][(int) $row->owner_id] = true;
+        }
+
+        return $manageable;
     }
 
     private function hasOrganizationRole(
