@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Releases\ReorderContentBlocksRequest;
 use App\Http\Requests\Api\V1\Releases\StoreContentBlockRequest;
 use App\Http\Requests\Api\V1\Releases\UpdateContentBlockRequest;
 use App\Http\Resources\ContentBlockResource;
@@ -10,6 +11,7 @@ use App\Http\Responses\ApiResponse;
 use App\Models\ContentBlock;
 use App\Models\Page;
 use App\Services\Releases\ContentBlockService;
+use App\Services\Releases\ContentOrderService;
 use App\Services\Releases\ReleaseActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,6 +33,16 @@ final class ContentBlockController extends Controller
         Gate::authorize('update', $page->owningRelease());
 
         return ApiResponse::success($this->resource($service->update($block, $request->user(), $request->validated()), $page));
+    }
+
+    public function reorder(ReorderContentBlocksRequest $request, Page $page, ContentOrderService $order): JsonResponse
+    {
+        Gate::authorize('update', $page->owningRelease());
+        $blocks = $order->reorderBlocks($page, $request->user(), $request->input('block_ids'));
+
+        return ApiResponse::success($blocks
+            ->map(fn (ContentBlock $block): array => (new ContentBlockResource($block, $page->public_id))->resolve())
+            ->all());
     }
 
     public function destroy(Request $request, Page $page, ContentBlock $block, ReleaseActivityLogger $activity): JsonResponse

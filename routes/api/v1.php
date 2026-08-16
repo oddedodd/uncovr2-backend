@@ -207,9 +207,11 @@ Route::middleware(['auth:sanctum', 'active-device-session', 'throttle:authentica
 
         // Portal release builder: release -> pages -> blocks.
         Route::post('/releases/{release}/pages', [PageController::class, 'storeForRelease'])->name('releases.pages.store');
+        Route::put('/releases/{release}/pages/order', [PageController::class, 'reorderForRelease'])->name('releases.pages.order');
         Route::patch('/pages/{page}', [PageController::class, 'update'])->name('pages.update');
         Route::delete('/pages/{page}', [PageController::class, 'destroy'])->name('pages.destroy');
         Route::post('/pages/{page}/blocks', [ContentBlockController::class, 'store'])->name('pages.blocks.store');
+        Route::put('/pages/{page}/blocks/order', [ContentBlockController::class, 'reorder'])->name('pages.blocks.order');
         Route::patch('/pages/{page}/blocks/{block}', [ContentBlockController::class, 'update'])->name('pages.blocks.update');
         Route::delete('/pages/{page}/blocks/{block}', [ContentBlockController::class, 'destroy'])->name('pages.blocks.destroy');
         Route::get('/pages/{page}/blocks/{block}/versions', [ContentBlockController::class, 'versions'])->name('pages.blocks.versions');

@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 
 final class ContentBlockService
 {
-    public function __construct(private readonly ContentBlockPayloadValidator $validator, private readonly ReleaseActivityLogger $activity) {}
+    public function __construct(private readonly ContentBlockPayloadValidator $validator, private readonly ReleaseActivityLogger $activity, private readonly ContentOrderService $order) {}
 
     public function create(Page $page, User $actor, array $data): ContentBlock
     {
@@ -40,15 +40,16 @@ final class ContentBlockService
             $type = $data['type'] ?? $locked->type->value;
             $payload = $data['payload'] ?? $locked->payload;
             $payload = $this->validator->validate($type, $payload, $release);
-            if (isset($data['position']) && $data['position'] !== $locked->position) {
-                $this->assertPositionAvailable($page, $data['position'], $locked);
-            }
             $locked->update([
-                'position' => $data['position'] ?? $locked->position,
                 'type' => $type, 'payload' => $payload, 'version' => $locked->version + 1,
                 'updated_by_user_id' => $actor->getKey(),
             ]);
             $this->snapshot($locked, $actor);
+            // Position is ordering, not content: moving the block renumbers its
+            // siblings instead of colliding with whoever holds the target slot.
+            if (isset($data['position']) && $data['position'] !== $locked->position) {
+                $this->order->moveBlock($locked, $actor, $data['position']);
+            }
             $this->activity->record($release, $actor, 'content_block.updated', $locked, ['version' => $locked->version]);
 
             return $locked;
@@ -60,13 +61,9 @@ final class ContentBlockService
         $block->versions()->create(['version' => $block->version, 'type' => $block->type->value, 'payload' => $block->payload, 'created_by_user_id' => $actor->getKey(), 'created_at' => now()]);
     }
 
-    private function assertPositionAvailable(Page $page, int $position, ?ContentBlock $except = null): void
+    private function assertPositionAvailable(Page $page, int $position): void
     {
-        $query = $page->blocks()->where('position', $position);
-        if ($except) {
-            $query->whereKeyNot($except->getKey());
-        }
-        if ($query->exists()) {
+        if ($page->blocks()->where('position', $position)->exists()) {
             throw ValidationException::withMessages(['position' => ['The position is already in use on this page.']]);
         }
     }

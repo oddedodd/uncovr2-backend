@@ -307,6 +307,14 @@ class OpenApiGenerator
             return $this->contentBlockSchema(true);
         }
 
+        if (str_ends_with($name, 'releases.pages.order')) {
+            return $this->orderSchema('page_ids', 'Every page of the release exactly once, in the wanted order.');
+        }
+
+        if (str_ends_with($name, 'pages.blocks.order')) {
+            return $this->orderSchema('block_ids', 'Every block on the page exactly once, in the wanted order.');
+        }
+
         if (str_ends_with($name, 'platform.organization-onboardings.store')) {
             return [
                 'type' => 'object',
@@ -457,6 +465,25 @@ class OpenApiGenerator
             'properties' => [
                 'position' => ['type' => 'integer', 'minimum' => 1],
                 'title' => ['type' => ['string', 'null'], 'maxLength' => 200],
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function orderSchema(string $field, string $description): array
+    {
+        return [
+            'type' => 'object',
+            'additionalProperties' => false,
+            'required' => [$field],
+            'properties' => [
+                $field => [
+                    'type' => 'array',
+                    'minItems' => 1,
+                    'uniqueItems' => true,
+                    'description' => $description,
+                    'items' => $this->ulidSchema(),
+                ],
             ],
         ];
     }
@@ -678,6 +705,14 @@ class OpenApiGenerator
             return $this->dataResponseSchema('#/components/schemas/ContentBlock');
         }
 
+        if (str_ends_with($name, 'releases.pages.order')) {
+            return $this->dataCollectionResponseSchema('#/components/schemas/ReleasePage');
+        }
+
+        if (str_ends_with($name, 'pages.blocks.order')) {
+            return $this->dataCollectionResponseSchema('#/components/schemas/ContentBlock');
+        }
+
         if (str_ends_with($name, 'pages.blocks.versions')) {
             return [
                 'type' => 'object',
@@ -713,9 +748,20 @@ class OpenApiGenerator
         ];
     }
 
+    /** @return array<string, mixed> */
+    private function dataCollectionResponseSchema(string $reference): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['data'],
+            'properties' => ['data' => ['type' => 'array', 'items' => ['$ref' => $reference]]],
+        ];
+    }
+
     private function isPortalReleaseBuilderOperation(string $name): bool
     {
         return str_ends_with($name, 'releases.pages.store')
+            || str_ends_with($name, 'releases.pages.order')
             || str_ends_with($name, 'pages.update')
             || str_ends_with($name, 'pages.destroy')
             || str_contains($name, '.pages.blocks.');

@@ -27,6 +27,14 @@ Positions are positive and unique within their parent. Database partial unique
 indexes ignore soft-deleted rows so a position can be reused without destroying
 its historical record.
 
+Ordering is the backend's responsibility. A client states the order it wants and
+the API renumbers the whole sibling set to a contiguous `1..n`; it never has to
+compute positions for the rows it is not moving. Because the partial unique
+indexes are immediate — a partial index cannot be deferred — every renumbering
+runs as a two-phase write inside one transaction: `ContentOrderService` parks the
+rows above the current maximum position and then writes the final `1..n`.
+Deleting a page or block still leaves a gap until the next reorder.
+
 ## Portal API contract
 
 All routes are authenticated below `/api/v1`:
@@ -35,9 +43,11 @@ All routes are authenticated below `/api/v1`:
 | --- | --- | --- |
 | Create page | `POST /releases/{release}/pages` | `update` release |
 | Update page | `PATCH /pages/{page}` | `update` owning release |
+| Reorder pages | `PUT /releases/{release}/pages/order` | `update` release |
 | Delete page | `DELETE /pages/{page}` | `update` owning release |
 | Create block | `POST /pages/{page}/blocks` | `update` owning release |
 | Update block | `PATCH /pages/{page}/blocks/{block}` | `update` owning release |
+| Reorder blocks | `PUT /pages/{page}/blocks/order` | `update` owning release |
 | Delete block | `DELETE /pages/{page}/blocks/{block}` | `update` owning release |
 | Block history | `GET /pages/{page}/blocks/{block}/versions` | `view` owning release |
 | Assign editor | `POST /releases/{release}/editors` | `manageEditors` release |
@@ -124,6 +134,42 @@ Block create payload and response:
 PATCH requests accept the same mutable fields and may send only the fields that
 change. Existing soft deletion, immutable block versions and release activity
 history remain in use.
+
+## Ordering contract
+
+`PUT /releases/{release}/pages/order` and `PUT /pages/{page}/blocks/order` take
+the complete sibling set in the wanted order:
+
+```json
+{ "page_ids": ["01PAGE_C", "01PAGE_A", "01PAGE_B"] }
+```
+
+Both return the reordered siblings, renumbered `1..n`, in an array:
+
+```json
+{
+  "data": [
+    { "id": "01PAGE_C", "parent": { "type": "release", "id": "01RELEASE_ULID" },
+      "position": 1, "title": "Back cover", "blocks": [] }
+  ]
+}
+```
+
+The list must be a complete permutation of the parent's current children. A
+partial list, an unknown id, a duplicate or an id belonging to another parent is
+rejected with `422 validation_failed` on `page_ids` / `block_ids` — a reorder is
+never applied halfway. Reordering blocks is pure ordering: it does not bump
+`version` and writes no `content_block_versions` row.
+
+`PATCH` still accepts `position` on a page and a block, and it now means "move
+here", not "claim this slot": the row moves to that position, the remaining
+siblings close the gap, and the whole set is renumbered `1..n`. A position beyond
+the sibling count is clamped to last. `POST` is unchanged — creating a child on a
+position another child already holds is still `422`, so a create form should
+default to `n + 1`.
+
+Activity history records `page.reordered` and `content_block.reordered` with the
+resulting id order, rather than one update event per moved row.
 
 The relevant `ReleaseResource` shape for P5.4 is:
 
